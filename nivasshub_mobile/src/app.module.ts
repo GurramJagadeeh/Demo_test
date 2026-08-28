@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LoginModule } from './auth/login.module';
 import { CountryModule } from './country/country.module';
 /**
  * Root application module.
@@ -9,6 +10,7 @@ import { CountryModule } from './country/country.module';
   // Registers the CountryModule and makes its
   // controller and service available to the application.
   imports: [
+    LoginModule,
     CountryModule,
   ],
 })
