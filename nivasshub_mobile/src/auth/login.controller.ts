@@ -17,10 +17,7 @@ export class LoginController {
   /** POST /auth/login derives network metadata on the server. */
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(
-    @Body() credentials: LoginDto,
-    @Req() request: FastifyRequest,
-  ) {
+  async login(@Body() credentials: LoginDto, @Req() request: FastifyRequest) {
     const ipadd = request.ip ?? request.socket.remoteAddress ?? '';
     const dinfo = this.getDeviceInfo(request);
 
@@ -38,6 +35,8 @@ export class LoginController {
     const deviceInfo =
       request.headers['x-device-info'] ?? request.headers['user-agent'];
 
-    return Array.isArray(deviceInfo) ? deviceInfo[0] ?? '' : deviceInfo ?? '';
+    return Array.isArray(deviceInfo)
+      ? (deviceInfo[0] ?? '')
+      : (deviceInfo ?? '');
   }
 }
