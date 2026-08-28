@@ -4,14 +4,14 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { LoginRepository } from './login.repository';
-import { LoginRequest, LoginResponse } from './login.types';
+import { LoginProcedureRequest, LoginResponse } from './login.types';
 
 @Injectable()
 export class LoginService {
   constructor(private readonly loginRepository: LoginRepository) {}
 
   /** Parses the procedure response and preserves its status code. */
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
+  async login(credentials: LoginProcedureRequest): Promise<LoginResponse> {
     try {
       const result = await this.loginRepository.login(credentials);
       if (!result) {
@@ -23,8 +23,12 @@ export class LoginService {
         throw new InternalServerErrorException(this.internalError());
       }
 
-      if (response.ErrorCode !== 200) {
+      if (response.ErrorCode !== 200 && this.isHttpStatus(response.ErrorCode)) {
         throw new HttpException(response, response.ErrorCode);
+      }
+
+      if (response.ErrorCode !== 200) {
+        throw new InternalServerErrorException(this.internalError());
       }
 
       return response;
@@ -35,6 +39,11 @@ export class LoginService {
 
       throw new InternalServerErrorException(this.internalError());
     }
+  }
+
+  /** Prevents an invalid procedure code from becoming an HTTP status. */
+  private isHttpStatus(errorCode: number): boolean {
+    return Number.isInteger(errorCode) && errorCode >= 100 && errorCode <= 599;
   }
 
   /** Checks that the procedure returned the expected JSON envelope. */

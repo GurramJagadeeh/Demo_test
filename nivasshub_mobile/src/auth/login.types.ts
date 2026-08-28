@@ -1,11 +1,4 @@
-/** Login request parameters accepted by the API. */
-export interface LoginRequest {
-  umail: string;
-  pwd: string;
-  cont_code: string | null;
-  ipadd: string;
-  dinfo: string;
-}
+import { LoginDto } from './login.dto';
 
 /** JSON envelope returned by the login procedure. */
 export interface LoginResponse {
@@ -13,3 +6,9 @@ export interface LoginResponse {
   ErrorMsg: string;
   RefreshToken: string | null;
 }
+
+/** Internal procedure parameters, including server-derived metadata. */
+export type LoginProcedureRequest = LoginDto & {
+  ipadd: string;
+  dinfo: string;
+};

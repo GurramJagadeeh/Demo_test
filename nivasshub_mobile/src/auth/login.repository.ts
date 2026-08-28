@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { connectDB, sql } from '../config/db';
-import { LoginRequest } from './login.types';
+import { LoginProcedureRequest } from './login.types';
 
 @Injectable()
 export class LoginRepository {
   /** Executes the login stored procedure with the request parameters. */
-  async login(credentials: LoginRequest): Promise<string | null> {
+  async login(credentials: LoginProcedureRequest): Promise<string | null> {
     const pool = await connectDB();
     const result = await pool
       .request()
