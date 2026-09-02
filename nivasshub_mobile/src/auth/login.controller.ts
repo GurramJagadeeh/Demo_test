@@ -1,8 +1,19 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { LoginService } from './login.service';
-import { LoginDto } from './login.dto';
-import { ForgetPasswordDto,ForgotPasswordResponseDto } from './login.dto';
+import {
+  LoginDto,
+  ForgetPasswordDto,
+  ForgotPasswordResponseDto,
+  ForgotPasswordVerifyOtpDto,
+} from './login.dto';
 @Controller('auth')
 export class LoginController {
   constructor(private readonly loginService: LoginService) {}
@@ -22,17 +33,23 @@ export class LoginController {
   }
   /** Reads device information from trusted request metadata. */
   private getDeviceInfo(request: FastifyRequest): string {
-    const deviceInfo = request.headers['x-device-info'] ?? request.headers['user-agent'];
-    return Array.isArray(deviceInfo) ? (deviceInfo[0] ?? '') : (deviceInfo ?? '');
+    const deviceInfo =
+      request.headers['x-device-info'] ?? request.headers['user-agent'];
+    return Array.isArray(deviceInfo)
+      ? (deviceInfo[0] ?? '')
+      : (deviceInfo ?? '');
   }
-// Forgot Password API endpoint
-@Post('forgot-password')
-@HttpCode(HttpStatus.OK)
-async forgotPassword(
-@Body()dto:ForgetPasswordDto,
-@Req()request:FastifyRequest,
-):Promise<ForgotPasswordResponseDto>{
-// Pass the Forgot Password request to the service layer
-return this.loginService.forgotPassword(dto)
-}
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(
+    @Body() dto: ForgetPasswordDto,
+  ): Promise<ForgotPasswordResponseDto> {
+    return this.loginService.forgotPassword(dto);
+  }
+
+  @Post('forgot-password/verify-otp')
+  @HttpCode(HttpStatus.OK)
+  verifyForgotPasswordOtp(@Body() body: ForgotPasswordVerifyOtpDto) {
+    return this.loginService.verifyForgotPasswordOtp(body);
+  }
 }
