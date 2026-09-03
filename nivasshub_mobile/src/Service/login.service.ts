@@ -3,7 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { LoginRepository } from './login.repository';
+import { LoginRepository } from '../repositories/login.repository';
 import {
   ForgotPasswordVerifyOtpRequest,
   ForgotPasswordVerifyOtpResponse,
@@ -11,13 +11,13 @@ import {
   LoginResponse,
   UpdatePasswordRequest,
   UpdatePasswordResponse,
-} from './login.types';
+} from '../types/login.types';
 import {
   ForgetPasswordDto,
   ForgotPasswordResponseDto,
   ForgotPasswordVerifyOtpDto,
   UpdatePasswordDto
-} from './login.dto';
+} from '../dto/login.dto';
 @Injectable()
 export class LoginService {
   constructor(private readonly loginRepository: LoginRepository) {}

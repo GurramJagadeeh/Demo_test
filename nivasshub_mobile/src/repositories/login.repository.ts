@@ -4,8 +4,8 @@ import {
   ForgotPasswordVerifyOtpRequest,
   LoginProcedureRequest,
   UpdatePasswordRequest,
-} from './login.types';
-import { ForgetPasswordDto, ForgotPasswordResponseDto } from './login.dto';
+} from '../types/login.types';
+import { ForgetPasswordDto, ForgotPasswordResponseDto } from '../dto/login.dto';
 @Injectable()
 export class LoginRepository {
   /** Executes the login stored procedure with the request parameters. */

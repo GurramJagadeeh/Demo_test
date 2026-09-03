@@ -19,6 +19,6 @@ export class CountryRepository {
     }
     // Return the JSON response from the Result column.
     return result.recordset[0].Result;
-  }
+  }  
 }
  
