@@ -1,4 +1,4 @@
-import { LoginDto } from './login.dto';
+import { LoginDto } from '../dto/login.dto';
 /** JSON envelope returned by the login procedure. */
 export interface LoginResponse {
   ErrorCode: number;

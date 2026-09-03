@@ -7,14 +7,14 @@ import {
   Req,
 } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
-import { LoginService } from './login.service';
+import { LoginService } from '../Service/login.service';
 import {
   LoginDto,
   ForgetPasswordDto,
   ForgotPasswordResponseDto,
   ForgotPasswordVerifyOtpDto,
   UpdatePasswordDto,
-} from './login.dto';
+} from '../dto/login.dto';
 @Controller('auth')
 export class LoginController {
   constructor(private readonly loginService: LoginService) {}

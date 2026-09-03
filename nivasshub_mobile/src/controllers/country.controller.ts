@@ -1,7 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
-import { CountryService } from './country.service';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { CountryService } from '../Service/country.service';
  
-@Controller('country-codes')
+@Controller()
 export class CountryController {
   constructor(
     private readonly countryService: CountryService,
@@ -12,9 +12,9 @@ export class CountryController {
    * Delegates the request to the CountryService,
    * which handles the business logic and database response.
    */
-  @Get()
+  @Get('country-codes')
   async getCountryCodes() {
     return this.countryService.getCountryCodes();
-  }
+  } 
 }
  

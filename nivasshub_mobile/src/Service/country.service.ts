@@ -1,10 +1,10 @@
 import {
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CountryRepository } from './country.repository';
- 
+import { CountryRepository } from '../repositories/country.repository';
 @Injectable()
 export class CountryService {
   constructor(
@@ -62,6 +62,6 @@ export class CountryService {
         'Failed to fetch country codes',
       );
     }
-  }
+  }  
 }
  
