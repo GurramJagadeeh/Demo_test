@@ -3,6 +3,7 @@ import { connectDB, sql } from '../config/db';
 import {
   ForgotPasswordVerifyOtpRequest,
   LoginProcedureRequest,
+  UpdatePasswordRequest,
 } from './login.types';
 import { ForgetPasswordDto, ForgotPasswordResponseDto } from './login.dto';
 @Injectable()
@@ -69,4 +70,58 @@ export class LoginRepository {
       throw error;
     }
   }
+  /**
+ * Executes the USP_FP_Update_Password stored procedure.
+ * The stored procedure is responsible for:
+ * - Validating the FP token
+ * - Validating the user account status
+ * - Updating the user's password
+ * - Invalidating active user sessions
+ * - Returning the final JSON response
+ */
+async updatePassword(
+  request: UpdatePasswordRequest,
+): Promise<string | null> {
+  try {
+    // Establish a connection with the SQL Server database.
+    const pool = await connectDB();
+    // Create a database request and pass the required
+    // parameters to the stored procedure.
+    const result = await pool
+      .request()
+      // FP_Token is generated during the forgot-password
+      // OTP verification process.
+      .input(
+        'FP_Token',
+        sql.VarChar(sql.MAX),
+        request.FP_Token,
+      )
+      // Pass the new password to the stored procedure.
+      .input(
+        'new_pwd',
+        sql.VarChar(150),
+        request.new_pwd,
+      )
+      // Execute the password update stored procedure.
+      .execute('dbo.USP_FP_Update_Password');
+    // If SQL Server did not return any record,
+    // return null so the service can handle it as an error.
+    if (!result.recordset?.length) {
+      return null;
+    }
+    // The stored procedure returns the JSON response
+    // as a value inside the Result column.
+    const row = result.recordset[0] as Record<string, unknown>;
+    // Get the Result column.
+    // Object.values(row)[0] is used as a fallback
+    // in case the column name is different.
+    const response = row.Result ?? Object.values(row)[0];
+    // Return the JSON response only when it is a string.
+    return typeof response === 'string' ? response : null;
+  } catch (error) {
+    // Pass the database/stored procedure error
+    // to the service layer.
+    throw error;
+  }
+}
 }
