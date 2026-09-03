@@ -9,11 +9,14 @@ import {
   ForgotPasswordVerifyOtpResponse,
   LoginProcedureRequest,
   LoginResponse,
+  UpdatePasswordRequest,
+  UpdatePasswordResponse,
 } from './login.types';
 import {
   ForgetPasswordDto,
   ForgotPasswordResponseDto,
   ForgotPasswordVerifyOtpDto,
+  UpdatePasswordDto
 } from './login.dto';
 @Injectable()
 export class LoginService {
@@ -223,4 +226,72 @@ export class LoginService {
       });
     }
   }
+  /**
+ * Updates the user's password using the
+ * USP_FP_Update_Password stored procedure.
+ * The service does not directly update the database.
+ * All password update logic remains inside the stored procedure.
+ */
+async updatePassword(
+  body: UpdatePasswordDto,
+): Promise<UpdatePasswordResponse> {
+  // Prepare the request object expected by the repository.
+  const request: UpdatePasswordRequest = {
+    FP_Token: body.FP_Token,
+    new_pwd: body.new_pwd,
+  };
+  try {
+    // Call the repository to execute
+    // USP_FP_Update_Password.
+    const json = await this.loginRepository.updatePassword(request);
+    // If the stored procedure did not return a response,
+    // return a standard internal server error.
+    if (!json) {
+      throw new InternalServerErrorException({
+        HttpStatus: 500,
+        Message:
+          'An unexpected error occurred while updating the password.',
+      });
+    }
+    // Convert the JSON string returned by SQL Server
+    // into a TypeScript object.
+    const response = JSON.parse(json) as UpdatePasswordResponse;
+    // Validate the basic response structure returned
+    // by the stored procedure.
+    if (
+      typeof response.HttpStatus !== 'number' ||
+      typeof response.Message !== 'string'
+    ) {
+      throw new InternalServerErrorException({
+        HttpStatus: 500,
+        Message:
+          'An unexpected error occurred while updating the password.',
+      });
+    }
+    // If the password was successfully updated,
+    // return the response directly to the controller.
+    if (response.HttpStatus === 200) {
+      return response;
+    }
+    // For error responses, preserve the HTTP status
+    // returned by the stored procedure.
+    throw new HttpException(
+      response,
+      response.HttpStatus,
+    );
+  } catch (error: unknown) {
+    // Do not modify an HttpException that was already
+    // created using the stored procedure status code.
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    // Convert unexpected application/database errors
+    // into a standard 500 response.
+    throw new InternalServerErrorException({
+      HttpStatus: 500,
+      Message:
+        'An unexpected error occurred while updating the password.',
+    });
+  }
+}
 }

@@ -13,6 +13,7 @@ import {
   ForgetPasswordDto,
   ForgotPasswordResponseDto,
   ForgotPasswordVerifyOtpDto,
+  UpdatePasswordDto,
 } from './login.dto';
 @Controller('auth')
 export class LoginController {
@@ -52,4 +53,17 @@ export class LoginController {
   verifyForgotPasswordOtp(@Body() body: ForgotPasswordVerifyOtpDto) {
     return this.loginService.verifyForgotPasswordOtp(body);
   }
+  /**
+ * POST /auth/forgot-password/update-password
+ * Updates the user's password using the FP token
+ * generated during forgot-password OTP verification.
+ */
+@Post('forgot-password/update-password')
+@HttpCode(HttpStatus.OK)
+async updatePassword(
+  @Body() dto: UpdatePasswordDto,
+) {
+  // Pass the validated request body to the service.
+  return this.loginService.updatePassword(dto);
+}
 }

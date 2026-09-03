@@ -24,3 +24,23 @@ export interface ForgotPasswordVerifyOtpResponse {
   FP_Token?: string;
   message: string;
 }
+/**
+ * Request parameters required by the
+ * USP_FP_Update_Password stored procedure.
+ */
+export interface UpdatePasswordRequest {
+  /** Forgot-password token received after OTP verification. */
+  FP_Token: string;
+  /** New password entered by the user. */
+  new_pwd: string;
+}
+/**
+ * JSON response returned by the
+ * USP_FP_Update_Password stored procedure.
+ */
+export interface UpdatePasswordResponse {
+  /** HTTP-style status code returned by the stored procedure. */
+  HttpStatus: number;
+  /** Success or error message returned by the stored procedure. */
+  Message: string;
+}
