@@ -1,9 +1,10 @@
 import { LoginDto } from '../dto/login.dto';
 /** JSON envelope returned by the login procedure. */
 export interface LoginResponse {
-  ErrorCode: number;
-  ErrorMsg: string;
-  RefreshToken: string | null;
+  success: boolean;
+  statusCode: number;
+  message: string;
+  Login_Tokens: string | null;
 }
 /** Internal procedure parameters, including server-derived metadata. */
 export type LoginProcedureRequest = LoginDto & {
