@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { RegisterRepository } from '../repositories/register.repository';
+import { RegistrationCheckDto } from '../dto/register.dto';
  
 @Injectable()
 export class RegisterService {
@@ -68,4 +69,89 @@ export class RegisterService {
     });
   }
 }
+  //-------------USER REGISTRATION PRE-CHECK----------------------
+  /**
+   * Checks whether an email or mobile number can proceed
+   * with user registration.
+   * The stored procedure returns an HTTP-style status code
+   * and JSON response.
+   */
+  async registrationCheck(
+    dto: RegistrationCheckDto,
+  ) {
+    try {
+      // Call the repository to execute the stored procedure.
+      const result =
+        await this.registerRepository.registrationCheck(
+          dto.umail ?? '',
+          dto.mobile_cont_code ?? '',
+        );
+      // Handle no response from the stored procedure.
+      if (!result) {
+        throw new InternalServerErrorException({
+          success: false,
+          statusCode: 500,
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'An unexpected error occurred. Please try again later',
+        });
+      }
+      let response;
+      try {
+        // Parse the JSON returned by the stored procedure.
+        response = JSON.parse(result);
+      } catch {
+        // Handle invalid JSON from the database.
+        throw new InternalServerErrorException({
+          success: false,
+          statusCode: 500,
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'An unexpected error occurred. Please try again later',
+        });
+      }
+      // Validate the statusCode returned by the stored procedure.
+      if (
+        !response ||
+        typeof response.statusCode !== 'number'
+      ) {
+        throw new InternalServerErrorException({
+          success: false,
+          statusCode: 500,
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'An unexpected error occurred. Please try again later',
+        });
+      }
+      // Return successful response.
+      if (
+        response.statusCode >= 200 &&
+        response.statusCode < 300
+      ) {
+        return response;
+      }
+      /**
+       * Preserve the status code and response body
+       * returned by the stored procedure.
+       */
+      throw new HttpException(
+        response,
+        response.statusCode,
+      );
+    } catch (error) {
+      // Preserve the HTTP response generated from
+      // the stored procedure.
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      // Convert unexpected errors into HTTP 500.
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          'An unexpected error occurred. Please try again later',
+      });
+    }
+  }
 }
