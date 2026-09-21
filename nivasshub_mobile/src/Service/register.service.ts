@@ -84,7 +84,7 @@ export class RegisterService {
       const result =
         await this.registerRepository.registrationCheck(
           dto.umail ?? '',
-          dto.mobile_cont_code ?? '',
+          dto.cont_code ?? '',
         );
       // Handle no response from the stored procedure.
       if (!result) {
