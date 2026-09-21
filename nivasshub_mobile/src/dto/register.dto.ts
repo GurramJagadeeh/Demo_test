@@ -17,5 +17,5 @@ export class RegistrationCheckDto {
   @IsOptional()
   @IsString()
   @MaxLength(25)
-  mobile_cont_code?: string;
+   cont_code?: string;
 }

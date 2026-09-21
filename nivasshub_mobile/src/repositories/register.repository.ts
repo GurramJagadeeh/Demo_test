@@ -44,7 +44,7 @@ const pool = await connectDB();
    */
   async registrationCheck(
     umail: string,
-    mobileContCode: string,
+    contCode: string,
   ): Promise<string | null> {
     try {
       // Establish database connection.
@@ -58,9 +58,9 @@ const pool = await connectDB();
           umail,
         )
         .input(
-          'mobile_cont_code',
+          'cont_code',
           sql.VarChar(25),
-          mobileContCode,
+          contCode,
         )
         .execute(
           'dbo.USP_User_Registration_Mobile_Mail_Check',
