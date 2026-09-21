@@ -70,11 +70,9 @@ export class RegisterService {
   }
 }
   //-------------USER REGISTRATION PRE-CHECK----------------------
-
   /**
    * Checks whether an email or mobile number can proceed
    * with user registration.
-   *
    * The stored procedure returns an HTTP-style status code
    * and JSON response.
    */
