@@ -3,6 +3,7 @@ import { LoginModule } from './module/login.module';
 import { CountryModule } from './module/country.module';
 import { RegisterModule } from './module/register.module';
 import { SocietyModule } from './module/society.module';
+import { OtpModule } from './module/otp.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -15,7 +16,8 @@ import { SocietyModule } from './module/society.module';
     LoginModule,
     CountryModule,
     RegisterModule,
-    SocietyModule
+    SocietyModule,
+    OtpModule,
   ],
 })
 export class AppModule {}
