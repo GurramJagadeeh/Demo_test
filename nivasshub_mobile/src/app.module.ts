@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { LoginModule } from './module/login.module';
 import { CountryModule } from './module/country.module';
 import { RegisterModule } from './module/register.module';
+import { SocietyModule } from './module/society.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -12,7 +13,9 @@ import { RegisterModule } from './module/register.module';
   // controller and service available to the application.
   imports: [
     LoginModule,
-    CountryModule,RegisterModule
+    CountryModule,
+    RegisterModule,
+    SocietyModule
   ],
 })
 export class AppModule {}
