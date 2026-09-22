@@ -1,7 +1,7 @@
 import { Body,Controller, Get, HttpCode, HttpStatus,Post } from '@nestjs/common';
 import { CountryService } from '../Service/country.service';
 import { RegisterService } from '../Service/register.service';
-import { RegistrationCheckDto } from '../dto/register.dto';
+import { RegistrationCheckDto, VerifyRegistrationOtpDto } from '../dto/register.dto';
 import { UserRegistrationDto } from '../dto/register.dto';
 @Controller('country-codes')
 export class RegisterController {
@@ -40,5 +40,11 @@ export class RegisterController {
   @Body() dto: UserRegistrationDto,
 ) {
   return this.registerService.userRegistration(dto);
+}
+@Post('user-registration/verify-otp')
+async verifyRegistrationOtp(
+  @Body() dto: VerifyRegistrationOtpDto,
+) {
+  return this.registerService.verifyRegistrationOtp(dto);
 }
 }
