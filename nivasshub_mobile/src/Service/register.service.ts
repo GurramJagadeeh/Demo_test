@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { RegisterRepository } from '../repositories/register.repository';
 import { RegistrationCheckDto } from '../dto/register.dto';
- 
+import { UserRegistrationDto } from '../dto/register.dto';
 @Injectable()
 export class RegisterService {
   constructor(
@@ -154,4 +154,78 @@ export class RegisterService {
       });
     }
   }
+  //---------------------USER REGISTRATION---------------------------
+  /**
+   * Registers a new user in the system.
+   * The stored procedure handles business validation and returns
+   * an HTTP-style status code and JSON response.
+   */
+async userRegistration(
+  dto: UserRegistrationDto,
+) {
+  try {
+    const result =
+      await this.registerRepository.userRegistration(dto);
+    if (!result) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message:
+          'An unexpected error occurred while processing the request.',
+        data: null,
+      });
+    }
+    let response;
+    try {
+      response = JSON.parse(result);
+    } catch {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message:
+          'An unexpected error occurred while processing the request.',
+        data: null,
+      });
+    }
+    if (
+      !response ||
+      typeof response.statusCode !== 'number'
+    ) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message:
+          'An unexpected error occurred while processing the request.',
+        data: null,
+      });
+    }
+    // 200 / 201 success
+    if (
+      response.statusCode === 200 ||
+      response.statusCode === 201
+    ) {
+      return response;
+    }
+    // Preserve SP response and HTTP status
+    throw new HttpException(
+      response,
+      response.statusCode,
+    );
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    throw new InternalServerErrorException({
+      success: false,
+      statusCode: 500,
+      errorCode: 'INTERNAL_ERROR',
+      message:
+        'An unexpected error occurred while processing the request.',
+      data: null,
+    });
+  }
+}
 }

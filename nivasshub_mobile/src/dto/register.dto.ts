@@ -1,7 +1,10 @@
 import {
   IsOptional,
   IsString,
+  IsNotEmpty,
+  IsEmail,
   MaxLength,
+  IsNumber
 } from 'class-validator';
 /**
  * Request fields accepted by the pre-registration
@@ -18,4 +21,46 @@ export class RegistrationCheckDto {
   @IsString()
   @MaxLength(25)
    cont_code?: string;
+}
+/**
+ * Request fields accepted by the user registration endpoint.
+ * Business validation is handled by the stored procedure
+ * so that the API returns the defined response codes.
+ */
+export class UserRegistrationDto {
+  @IsString()
+  @IsNotEmpty()
+  fname: string;
+  @IsString()
+  @IsNotEmpty()
+  mobilenumber: string;
+  @IsString()
+  @IsNotEmpty()
+  mob_cont_code: string;
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+  @IsString()
+  @IsNotEmpty()
+  country: string;
+  @IsString()
+  @IsNotEmpty()
+  state: string;
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+  @IsNumber()
+  socid: number;
+  @IsNumber()
+  towerid: number;
+  @IsNumber()
+  floorid: number;
+  @IsNumber()
+  unitnumber: number;
+  @IsString()
+  @IsNotEmpty()
+  user_role: string;
+  @IsOptional()
+  @IsString()
+  unit_branch?: string;
 }
