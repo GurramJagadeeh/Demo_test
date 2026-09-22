@@ -166,4 +166,91 @@ export class RegisterRepository {
     throw error;
   }
 }
+/**
+   * Verifies the OTP for user registration.
+   * Executes the stored procedure USP_Verify_User_Registration_OTP
+   * with the provided user ID, OTP, identifier, OTP type, and maximum attempts.
+   * @param userId - The Base64 encoded user ID.
+   * @param otp - The OTP to verify.
+   * @param identifier - The identifier for the OTP (e.g., 'M' for mobile, 'E' for email).
+   * @param otpType - The type of OTP (default is 'UR' for user registration).
+   * @param maxAttempts - The maximum number of attempts allowed (default is 5).
+   * @returns A string response from the stored procedure or null if no response.
+   * @throws Error if there is an issue executing the stored procedure.
+   */
+async verifyRegistrationOtp(
+  userId: string,
+  otp: string,
+  identifier: string,
+  otpType: string = 'UR',
+  maxAttempts: number = 5,
+): Promise<string | null> {
+  try {
+    const pool = await connectDB();
+
+    // Convert Base64 userId to VARBINARY
+    const uidEnc = Buffer.from(userId, 'base64');
+
+    const request = pool.request();
+
+    request.input(
+      'UID_Enc',
+      sql.VarBinary(sql.MAX),
+      uidEnc,
+    );
+
+    request.input(
+      'OTP',
+      sql.VarChar(20),
+      otp,
+    );
+
+    request.input(
+      'Identifier',
+      sql.VarChar(10),
+      identifier,
+    );
+
+    request.input(
+      'OTPType',
+      sql.VarChar(50),
+      otpType,
+    );
+
+    request.input(
+      'MaxAttempts',
+      sql.Int,
+      maxAttempts,
+    );
+
+    request.output(
+      'ResponseJSON',
+      sql.NVarChar(sql.MAX),
+    );
+
+    const result = await request.execute(
+      'dbo.USP_Verify_User_Registration_OTP',
+    );
+
+    const responseJson =
+      result.output?.ResponseJSON;
+
+    if (
+      !responseJson ||
+      typeof responseJson !== 'string'
+    ) {
+      return null;
+    }
+
+    return responseJson;
+
+  } catch (error) {
+    console.error(
+      'Error executing USP_Verify_User_Registration_OTP:',
+      error,
+    );
+
+    throw error;
+  }
+}
 }

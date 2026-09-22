@@ -7,6 +7,7 @@ import {
 import { RegisterRepository } from '../repositories/register.repository';
 import { RegistrationCheckDto } from '../dto/register.dto';
 import { UserRegistrationDto } from '../dto/register.dto';
+import { VerifyRegistrationOtpDto } from '../dto/register.dto';
 @Injectable()
 export class RegisterService {
   constructor(
@@ -224,6 +225,82 @@ async userRegistration(
       errorCode: 'INTERNAL_ERROR',
       message:
         'An unexpected error occurred while processing the request.',
+      data: null,
+    });
+  }
+}
+async verifyRegistrationOtp(
+  dto: VerifyRegistrationOtpDto,
+) {
+  try {
+    const result =
+      await this.registerRepository.verifyRegistrationOtp(
+        dto.userId,
+        dto.otp,
+        dto.identifier,
+        dto.otpType ?? 'UR',
+        dto.maxAttempts ?? 5,
+      );
+
+    if (!result) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        status: 'error',
+        message:
+          'An unexpected error occurred while verifying OTP.',
+        data: null,
+      });
+    }
+
+    let response: any;
+
+    try {
+      response = JSON.parse(result);
+    } catch {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        status: 'error',
+        message:
+          'Invalid response received from OTP verification procedure.',
+        data: null,
+      });
+    }
+
+    if (
+      !response ||
+      typeof response.statusCode !== 'number'
+    ) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        status: 'error',
+        message:
+          'Invalid OTP verification response.',
+        data: null,
+      });
+    }
+
+    if (response.statusCode === 200) {
+      return response;
+    }
+
+    throw new HttpException(
+      response,
+      response.statusCode,
+    );
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+
+    throw new InternalServerErrorException({
+      success: false,
+      statusCode: 500,
+      status: 'error',
+      message:
+        'An unexpected error occurred while verifying OTP.',
       data: null,
     });
   }
