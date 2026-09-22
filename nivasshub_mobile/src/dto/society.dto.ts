@@ -1,11 +1,8 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-
 /**
  * DTO used to receive the society ID from the GET request.
- *
  * Example:
  * GET /society/details?socid=33
- *
  * Query parameters are received as strings by default,
  * so socid is intentionally defined as a string here.
  *

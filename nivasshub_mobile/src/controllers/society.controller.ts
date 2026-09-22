@@ -5,13 +5,10 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
-
 import { SocietyDetailsDto } from '../dto/society.dto';
 import { SocietyService } from '../Service/society.service';
-
 /**
  * Controller responsible for Society-related APIs.
- *
  * The controller handles HTTP requests and delegates
  * the actual processing to SocietyService.
  */
@@ -20,13 +17,10 @@ export class SocietyController {
   constructor(
     private readonly societyService: SocietyService,
   ) {}
-
   /**
    * Get the complete active structure of a society.
-   *
    * Example:
    * GET /society/details?socid=33
-   *
    * The response contains:
    * Society
    *   └── Towers

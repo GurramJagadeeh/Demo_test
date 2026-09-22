@@ -3,32 +3,19 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-
 import { SocietyDetailsDto } from '../dto/society.dto';
 import { SocietyRepository } from '../repositories/society.repository';
-
 /**
  * Service responsible for Society-related business operations.
- *
  * The service sits between the Controller and Repository.
- *
- * Controller
- *     ↓
- * SocietyService
- *     ↓
- * SocietyRepository
- *     ↓
- * Stored Procedure
  */
 @Injectable()
 export class SocietyService {
   constructor(
     private readonly societyRepository: SocietyRepository,
   ) {}
-
   /**
    * Retrieves the complete active structure of a society.
-   *
    * The stored procedure is responsible for:
    * - Society validation
    * - Active society filtering
@@ -37,12 +24,6 @@ export class SocietyService {
    * - Active unit filtering
    * - Building the response JSON
    * - Returning the status code
-   *
-   * Therefore, the service does not perform additional
-   * database queries or rebuild the response structure.
-   *
-   * @param dto - Contains the society ID received from the request.
-   * @returns Parsed JSON response from the stored procedure.
    */
   async getSocietyDetails(
     dto: SocietyDetailsDto,
@@ -51,24 +32,10 @@ export class SocietyService {
       /**
        * GET query parameters are received as strings because
        * transform:true is not enabled in the global ValidationPipe.
-       *
-       * Example:
-       * ?socid=33
-       *
-       * dto.socid = "33"
-       *
-       * Convert it to a number before sending it to SQL Server.
        */
       const societyId = Number(dto.socid);
-
       /**
        * Validate the value before passing it to SQL Server.
-       *
-       * Valid range:
-       * 1 to 2147483647
-       *
-       * This prevents invalid values from causing a SQL
-       * conversion error.
        */
       if (
         !Number.isInteger(societyId) ||
@@ -97,7 +64,6 @@ export class SocietyService {
           400,
         );
       }
-
       /**
        * Call the repository to execute the stored procedure.
        *
@@ -109,7 +75,6 @@ export class SocietyService {
         await this.societyRepository.getSocietyDetails(
           societyId,
         );
-
       /**
        * The stored procedure should always return JsonResponse.
        *
@@ -143,7 +108,6 @@ export class SocietyService {
        * Parse it so that we can determine the HTTP status code.
        */
       let response: any;
-
       try {
         response = JSON.parse(result.jsonResponse);
       } catch (error) {
@@ -155,7 +119,6 @@ export class SocietyService {
           'Invalid JSON returned by USP_Registration_Get_Society_Details:',
           error,
         );
-
         throw new InternalServerErrorException({
           statusCode: 500,
           status: 'error',
@@ -175,7 +138,6 @@ export class SocietyService {
           },
         });
       }
-
       /**
        * Use the statusCode returned by the stored procedure.
        *
@@ -186,7 +148,6 @@ export class SocietyService {
         typeof response?.statusCode === 'number'
           ? response.statusCode
           : result.statusCode;
-
       /**
        * If the stored procedure did not provide a valid status
        * code, we cannot safely determine the HTTP response.
@@ -214,7 +175,6 @@ export class SocietyService {
           },
         });
       }
-
       /**
        * For successful responses, return the JSON generated
        * by the stored procedure.
@@ -225,7 +185,6 @@ export class SocietyService {
       ) {
         return response;
       }
-
       /**
        * For 400, 404, and other error responses, use the
        * status code supplied by the stored procedure.
@@ -245,7 +204,6 @@ export class SocietyService {
       if (error instanceof HttpException) {
         throw error;
       }
-
       /**
        * Any unexpected repository/database/application error
        * is converted into a generic 500 response.
@@ -256,7 +214,6 @@ export class SocietyService {
         'Error fetching society details:',
         error,
       );
-
       throw new InternalServerErrorException({
         statusCode: 500,
         status: 'error',
