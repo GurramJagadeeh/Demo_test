@@ -4,6 +4,7 @@ import { CountryModule } from './module/country.module';
 import { RegisterModule } from './module/register.module';
 import { SocietyModule } from './module/society.module';
 import { OtpModule } from './module/otp.module';
+import { MailModule } from './mail/mail.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -18,6 +19,7 @@ import { OtpModule } from './module/otp.module';
     RegisterModule,
     SocietyModule,
     OtpModule,
+    MailModule,
   ],
 })
 export class AppModule {}
