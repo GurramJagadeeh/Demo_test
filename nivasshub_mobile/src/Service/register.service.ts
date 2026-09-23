@@ -8,10 +8,12 @@ import { RegisterRepository } from '../repositories/register.repository';
 import { RegistrationCheckDto } from '../dto/register.dto';
 import { UserRegistrationDto } from '../dto/register.dto';
 import { VerifyRegistrationOtpDto } from '../dto/register.dto';
+import { MailService } from '../mail/mail.service';
 @Injectable()
 export class RegisterService {
   constructor(
     private readonly registerRepository: RegisterRepository,
+    private readonly mailService: MailService,
   ) {}
   //-------------USER REGISTRATION GET----------------------
   async userregistrationget() {
@@ -160,6 +162,8 @@ export class RegisterService {
    * Registers a new user in the system.
    * The stored procedure handles business validation and returns
    * an HTTP-style status code and JSON response.
+   * If registration is successful, an email with an OTP is sent
+   * to the user's email address.
    */
 async userRegistration(
   dto: UserRegistrationDto,
@@ -208,6 +212,18 @@ async userRegistration(
       response.statusCode === 200 ||
       response.statusCode === 201
     ) {
+  try {
+    await this.mailService.sendRegistrationEmail(
+      response.data?.email ?? dto.email,
+      response.data?.fname ?? dto.fname,
+      response.data?.emailOtp,
+    );
+  } catch (mailError) {
+    console.error(
+      'Registration email failed:',
+      mailError,
+    );
+  }
       return response;
     }
     // Preserve SP response and HTTP status
@@ -305,4 +321,5 @@ async verifyRegistrationOtp(
     });
   }
 }
+
 }
