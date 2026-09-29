@@ -34,6 +34,8 @@ export class RegisterRepository {
   async registrationCheck(
     umail: string,
     contCode: string,
+    ipAddress: string,
+    userAgent: string,
   ): Promise<string | null> {
     try {
       const pool = await connectDB();
@@ -41,6 +43,8 @@ export class RegisterRepository {
         .request()
         .input('umail', sql.VarChar(254), umail)
         .input('cont_code', sql.VarChar(25), contCode)
+        .input('ipaddress', sql.VarChar(sql.MAX), ipAddress)
+        .input('user_agent', sql.VarChar(sql.MAX), userAgent)
         .execute(
           'dbo.USP_User_Registration_Mobile_Mail_Check',
         );

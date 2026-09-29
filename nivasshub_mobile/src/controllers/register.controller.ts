@@ -1,4 +1,13 @@
-import { Body,Controller, Get, HttpCode, HttpStatus,Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { CountryService } from '../Service/country.service';
 import { RegisterService } from '../Service/register.service';
 import { RegistrationCheckDto, VerifyRegistrationOtpDto } from '../dto/register.dto';
@@ -23,11 +32,17 @@ export class RegisterController {
    * POST /country-codes/registration-check
    */
   @Post('registration-check')
-   async registrationCheck(
-    @Body() dto: RegistrationCheckDto,
-  ) {
-    return this.registerService.registrationCheck(dto);
-  }
+async registrationCheck(
+  @Body() dto: RegistrationCheckDto,
+  @Req() req: Request,
+) {
+  /**
+   * IP address and user-agent are server-side request metadata.
+   * They are not accepted from the client through the DTO.
+   * The service will forward them to the stored procedure.
+   */
+  return this.registerService.registrationCheck(dto, req);
+}
   //---------------------USER REGISTRATION---------------------------
   /**
    * Registers a new user in the system.

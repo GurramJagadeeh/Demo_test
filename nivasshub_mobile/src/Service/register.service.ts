@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { RegisterRepository } from '../repositories/register.repository';
 import { RegistrationCheckDto } from '../dto/register.dto';
 import { UserRegistrationDto } from '../dto/register.dto';
@@ -81,13 +82,22 @@ export class RegisterService {
    */
   async registrationCheck(
     dto: RegistrationCheckDto,
+    req: Request,
+
   ) {
     try {
+      // Get the IP address of the request
+      const ipAddress = req.ip || '';
+
+      // Get the browser/app user-agent
+      const userAgent = req.headers['user-agent'] || '';
       // Call the repository to execute the stored procedure.
       const result =
         await this.registerRepository.registrationCheck(
           dto.umail ?? '',
           dto.cont_code ?? '',
+          ipAddress,
+          userAgent,
         );
       // Handle no response from the stored procedure.
       if (!result) {

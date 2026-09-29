@@ -16,7 +16,7 @@ import {
 export class RegistrationCheckDto {
   @IsOptional()
   @IsString()
-  @MaxLength(254)
+  @MaxLength(320)
   umail?: string;
   @IsOptional()
   @IsString()
