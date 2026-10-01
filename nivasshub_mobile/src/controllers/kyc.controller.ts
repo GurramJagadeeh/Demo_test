@@ -6,8 +6,9 @@ import {
   HttpStatus,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
-
+import { Request } from 'express';
 import {
   KycDocumentsDto,
   KycUploadDto,
@@ -20,7 +21,6 @@ export class KycController {
   constructor(
     private readonly kycService: KycService,
   ) {}
-
   /**
    * Fetch KYC documents applicable to the user.
    *
@@ -32,9 +32,10 @@ export class KycController {
   async getKycDocuments(
     @Query() dto: KycDocumentsDto,
   ) {
-    return this.kycService.getKycDocuments(dto);
+    return this.kycService.getKycDocuments(
+  dto.user_token,
+);
   }
-
   /**
    * Upload or re-upload a KYC document.
    *
@@ -46,10 +47,15 @@ export class KycController {
    * - Insert/update decision
    * - Version management
    */
-  @Post('upload')
-  async uploadKycDocument(
-    @Body() dto: KycUploadDto,
-  ) {
-    return this.kycService.uploadKycDocument(dto);
-  }
+ @Post('upload')
+async uploadKycDocument(
+  @Body() dto: KycUploadDto,
+  @Req() req: Request,
+) {
+  const result = await this.kycService.uploadKycDocument(
+    dto,
+    req,
+  );
+  return result;
+}
 }

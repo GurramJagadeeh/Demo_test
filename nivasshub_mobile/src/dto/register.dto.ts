@@ -58,9 +58,8 @@ export class UserRegistrationDto {
   floorid: number;
   @IsNumber()
   unitnumber: number;
-  @IsString()
-  @IsNotEmpty()
-  user_role: string;
+  @IsNumber()
+  user_role: number;
   @IsOptional()
   @IsString()
   unit_branch?: string;
@@ -70,20 +69,14 @@ export class VerifyRegistrationOtpDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(20)
   otp: string;
+
   @IsString()
   @IsNotEmpty()
   @IsIn(['M', 'E'])
   identifier: string;
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  otpType?: string;
-  @IsOptional()
-  @IsNumber()
-  maxAttempts?: number;
 }

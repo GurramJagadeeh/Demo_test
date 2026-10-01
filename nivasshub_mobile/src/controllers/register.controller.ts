@@ -51,15 +51,20 @@ async registrationCheck(
    * an HTTP-style status code and JSON response.
    */
   @Post('user-registration')
-  async userRegistration(
+async userRegistration(
   @Body() dto: UserRegistrationDto,
+  @Req() req: Request,
 ) {
-  return this.registerService.userRegistration(dto);
+  return this.registerService.userRegistration(dto, req);
 }
 @Post('user-registration/verify-otp')
 async verifyRegistrationOtp(
   @Body() dto: VerifyRegistrationOtpDto,
+  @Req() req: Request,
 ) {
-  return this.registerService.verifyRegistrationOtp(dto);
+  return this.registerService.verifyRegistrationOtp(
+    dto,
+    req,
+  );
 }
 }
