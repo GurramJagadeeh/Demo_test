@@ -71,22 +71,26 @@ export class RegisterRepository {
     }
   }
  // USER REGISTRATION
- /**
-   * Registers a new user in the system.
-   * Executes the stored procedure USP_user_Registration
-   * with the provided user registration details.
-   * @param dto - The user registration details.
-   * @returns A string response from the stored procedure or null if no response.
-   * @throws Error if there is an issue executing the stored procedure.
-   */
-  async userRegistration(
+/**
+ * Registers a new user in the system.
+ * Executes USP_User_Registration with the registration
+ * details and request metadata.
+ */
+async userRegistration(
   dto: UserRegistrationDto,
+  ipAddress: string,
+  userAgent: string,
 ): Promise<string | null> {
   try {
     const pool = await connectDB();
+
     const result = await pool
       .request()
-      .input('fname', sql.VarChar(250), dto.fname)
+      .input(
+        'fname',
+        sql.VarChar(250),
+        dto.fname,
+      )
       .input(
         'mobilenumber',
         sql.VarChar(100),
@@ -139,21 +143,35 @@ export class RegisterRepository {
       )
       .input(
         'user_role',
-        sql.VarChar(100),
+        sql.BigInt,
         dto.user_role,
       )
       .input(
         'unit_branch',
         sql.VarChar(100),
-        dto.unit_branch ?? null,
+        dto.unit_branch,
       )
-      .execute('dbo.USP_User_Registration');
+      .input(
+        'ipaddress',
+        sql.VarChar(sql.MAX),
+        ipAddress,
+      )
+      .input(
+        'user_agent',
+        sql.VarChar(sql.MAX),
+        userAgent,
+      )
+      .execute(
+        'dbo.USP_User_Registration',
+      );
+
     if (
       !result.recordset ||
       result.recordset.length === 0
     ) {
       return null;
     }
+
     const response = result.recordset
       .map((row) => Object.values(row)[0])
       .filter(
@@ -161,12 +179,14 @@ export class RegisterRepository {
           typeof value === 'string',
       )
       .join('');
+
     return response || null;
   } catch (error) {
     console.error(
       'Error executing USP_User_Registration:',
       error,
     );
+
     throw error;
   }
 }
@@ -188,19 +208,18 @@ async verifyRegistrationOtp(
   identifier: string,
   otpType: string = 'UR',
   maxAttempts: number = 5,
+  ipAddress: string,
+  userAgent: string,
 ): Promise<string | null> {
   try {
     const pool = await connectDB();
-
-    // Convert Base64 userId to VARBINARY
-    const uidEnc = Buffer.from(userId, 'base64');
 
     const request = pool.request();
 
     request.input(
       'UID_Enc',
-      sql.VarBinary(sql.MAX),
-      uidEnc,
+      sql.VarChar(sql.MAX),
+      userId,
     );
 
     request.input(
@@ -227,6 +246,18 @@ async verifyRegistrationOtp(
       maxAttempts,
     );
 
+    request.input(
+      'ipadd',
+      sql.VarChar(sql.MAX),
+      ipAddress,
+    );
+
+    request.input(
+      'useragent',
+      sql.VarChar(sql.MAX),
+      userAgent,
+    );
+
     request.output(
       'ResponseJSON',
       sql.NVarChar(sql.MAX),
@@ -247,7 +278,6 @@ async verifyRegistrationOtp(
     }
 
     return responseJson;
-
   } catch (error) {
     console.error(
       'Error executing USP_Verify_User_Registration_OTP:',

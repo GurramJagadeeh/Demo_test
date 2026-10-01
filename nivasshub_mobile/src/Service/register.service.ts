@@ -177,10 +177,18 @@ export class RegisterService {
    */
 async userRegistration(
   dto: UserRegistrationDto,
+  req: Request,
 ) {
   try {
+    const ipAddress = req.ip || '';
+    const userAgent = req.headers['user-agent'] || '';
+
     const result =
-      await this.registerRepository.userRegistration(dto);
+      await this.registerRepository.userRegistration(
+       dto,
+       ipAddress,
+       userAgent,
+       );
     if (!result) {
       throw new InternalServerErrorException({
         success: false,
@@ -257,43 +265,47 @@ async userRegistration(
 }
 async verifyRegistrationOtp(
   dto: VerifyRegistrationOtpDto,
+  req: Request,
 ) {
   try {
+    const ipAddress = req.ip || '';
+    const userAgent =
+      req.headers['user-agent'] || '';
     const result =
       await this.registerRepository.verifyRegistrationOtp(
-        dto.userId,
-        dto.otp,
-        dto.identifier,
-        dto.otpType ?? 'UR',
-        dto.maxAttempts ?? 5,
-      );
-
+       dto.userId,
+       dto.otp,
+       dto.identifier,
+       'UR', // OTP type defined by the registration SP
+        5,    // Maximum OTP attempts defined by the registration SP
+       ipAddress,
+       userAgent,
+  );
     if (!result) {
       throw new InternalServerErrorException({
         success: false,
         statusCode: 500,
-        status: 'error',
+        status: 'Internal Server Error',
+        errorCode: 'INTERNAL_ERROR',
         message:
           'An unexpected error occurred while verifying OTP.',
         data: null,
       });
     }
-
-    let response: any;
-
+    let response;
     try {
       response = JSON.parse(result);
     } catch {
       throw new InternalServerErrorException({
         success: false,
         statusCode: 500,
-        status: 'error',
+        status: 'Internal Server Error',
+        errorCode: 'INTERNAL_ERROR',
         message:
           'Invalid response received from OTP verification procedure.',
         data: null,
       });
     }
-
     if (
       !response ||
       typeof response.statusCode !== 'number'
@@ -301,17 +313,19 @@ async verifyRegistrationOtp(
       throw new InternalServerErrorException({
         success: false,
         statusCode: 500,
-        status: 'error',
+        status: 'Internal Server Error',
+        errorCode: 'INTERNAL_ERROR',
         message:
           'Invalid OTP verification response.',
         data: null,
       });
     }
-
+    // OTP verified successfully
     if (response.statusCode === 200) {
       return response;
     }
-
+    // Preserve the status code and response
+    // returned by the stored procedure.
     throw new HttpException(
       response,
       response.statusCode,
@@ -320,16 +334,15 @@ async verifyRegistrationOtp(
     if (error instanceof HttpException) {
       throw error;
     }
-
     throw new InternalServerErrorException({
       success: false,
       statusCode: 500,
-      status: 'error',
+      status: 'Internal Server Error',
+      errorCode: 'INTERNAL_ERROR',
       message:
         'An unexpected error occurred while verifying OTP.',
       data: null,
     });
   }
 }
-
 }

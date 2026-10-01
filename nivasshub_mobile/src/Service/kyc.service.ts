@@ -1,6 +1,7 @@
 import {HttpException,Injectable,InternalServerErrorException,} from '@nestjs/common';
 import {KycDocumentsDto,KycUploadDto,} from '../dto/kyc.dto';
 import { KycRepository } from '../repositories/kyc.repository';
+import { Request } from 'express';
 /**
  * Response structure returned by
  * dbo.USP_User_Registration_KYC_GET.
@@ -34,153 +35,157 @@ export class KycService {
    * Fetch KYC documents applicable to the user.
    */
   async getKycDocuments(
-    dto: KycDocumentsDto,
-  ): Promise<KycProcedureResponse> {
-    try {
-      // Execute the KYC GET stored procedure.
-      const result =
-        await this.kycRepository.getKycDocuments(
-          dto.user_token,
-        );
-      // A missing SP response is treated as an internal error.
-      if (!result) {
-        throw this.createInternalServerError();
-      }
-      let response: KycProcedureResponse;
-      try {
-        // The stored procedure returns JSON as a string.
-        response = JSON.parse(
-          result,
-        ) as KycProcedureResponse;
-      } catch (error) {
-        console.error(
-          'Invalid JSON returned by dbo.USP_User_Registration_KYC_GET:',
-          error,
-        );
-        throw this.createInternalServerError();
-      }
-      // Validate the status code returned by the SP.
-      const statusCode = response?.statusCode;
-      if (
-        typeof statusCode !== 'number' ||
-        !Number.isInteger(statusCode)
-      ) {
-        throw this.createInternalServerError();
-      }
-      // Return successful SP responses directly.
-      if (
-        statusCode >= 200 &&
-        statusCode < 300
-      ) {
-        return response;
-      }
-      // Preserve the status code and message returned
-      // by the stored procedure for expected errors.
-      throw new HttpException(
-        response,
-        statusCode,
+  userToken: string,
+) {
+  try {
+    const result =
+      await this.kycRepository.getKycDocuments(
+        userToken,
       );
-    } catch (error) {
-      // Do not convert our intended HTTP exceptions
-      // into a generic 500 error.
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      console.error(
-        'Error fetching KYC documents:',
-        error,
-      );
-      throw this.createInternalServerError();
+
+    if (!result) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        status: 'error',
+        message:
+          'An unexpected error occurred while fetching KYC documents.',
+        data: null,
+      });
     }
+
+    let response;
+
+    try {
+      response = JSON.parse(result);
+    } catch {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        status: 'error',
+        message:
+          'Invalid response received from KYC document procedure.',
+        data: null,
+      });
+    }
+
+    if (
+      !response ||
+      typeof response.statusCode !== 'number'
+    ) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        status: 'error',
+        message:
+          'Invalid KYC document response.',
+        data: null,
+      });
+    }
+
+    // 200 is successful, including data: [].
+    if (response.statusCode === 200) {
+      return response;
+    }
+
+    // Preserve the status code returned by the SP.
+    throw new HttpException(
+      response,
+      response.statusCode,
+    );
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+
+    throw new InternalServerErrorException({
+      success: false,
+      statusCode: 500,
+      status: 'error',
+      message:
+        'An unexpected error occurred while fetching KYC documents.',
+      data: null,
+    });
   }
+}
   /**
-   * Upload or re-upload a KYC document.
+   * Upload  a KYC document.
    * The stored procedure determines whether the operation
    * is an insert or re-upload and manages the document version.
    */
   async uploadKycDocument(
-    dto: KycUploadDto,
-  ): Promise<KycUploadProcedureResponse> {
-    try {
-      // Execute the KYC upload stored procedure.
-      const result =
-        await this.kycRepository.uploadKycDocument(
-          dto.user_id,
-          dto.doc_id,
-          dto.doc_url,
-        );
-      // A missing SP response indicates an unexpected failure.
-      if (!result) {
-        throw this.createInternalServerError();
-      }
-      let response: KycUploadProcedureResponse;
-      try {
-        // The stored procedure returns its response as JSON.
-        response = JSON.parse(
-          result,
-        ) as KycUploadProcedureResponse;
-      } catch (error) {
-        console.error(
-          'Invalid JSON returned by dbo.USP_User_KYC_Upload:',
-          error,
-        );
-        throw this.createInternalServerError();
-      }
-      // Validate the status code returned by the SP.
-      const statusCode = response?.statusCode;
-      if (
-        typeof statusCode !== 'number' ||
-        !Number.isInteger(statusCode)
-      ) {
-        throw this.createInternalServerError();
-      }
-      // Return successful responses such as:
-      // 201 - New document uploaded
-      // 200 - Existing document re-uploaded
-      if (
-        statusCode >= 200 &&
-        statusCode < 300
-      ) {
-        return response;
-      }
-      // Preserve expected business errors such as:
-      // 400 - Invalid input
-      // 403 - Inactive user
-      // 404 - User/document/society not found
-      // 409 - Pending/rejected document
-      throw new HttpException(
-        response,
-        statusCode,
-      );
-    } catch (error) {
-      // Preserve the status code and message for expected
-      // stored-procedure/business errors.
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      // Log the actual server-side error.
-      console.error(
-        'Error uploading/re-uploading KYC document:',
-        error,
-      );
-      // Never expose unexpected database/application
-      // error details directly to the client.
-      throw this.createInternalServerError();
-    }
-  }
-  /**
-   * Create a consistent generic 500 response.
-   * Internal database/application details are logged
-   * server-side but are not exposed to the client.
-   */
-  private createInternalServerError():
-    InternalServerErrorException {
-    return new InternalServerErrorException({
+  dto: KycUploadDto,
+  req: Request,
+) {
+  try {
+  const ipAddress = req.ip || '';
+  const userAgent =
+    req.headers['user-agent']?.toString() || '';
+  const result =
+    await this.kycRepository.uploadKycDocument(
+      dto.user_id,
+      dto.doc_id,
+      dto.doc_url,
+      ipAddress,
+      userAgent,
+    );
+  if (!result) {
+    throw new InternalServerErrorException({
       success: false,
       statusCode: 500,
       message:
-        'An unexpected error occurred while processing the request.',
+        'An unexpected error occurred while uploading the KYC document.',
       data: null,
     });
   }
+    let response;
+    try {
+      response = JSON.parse(result);
+    } catch {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        message:
+          'Invalid response received from KYC upload procedure.',
+        data: null,
+      });
+    }
+    if (
+      !response ||
+      typeof response.statusCode !== 'number'
+    ) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        message:
+          'Invalid KYC upload response.',
+        data: null,
+      });
+    }
+    // 200 = existing document re-uploaded successfully.
+    // 201 = new document uploaded successfully.
+    if (
+      response.statusCode === 200 ||
+      response.statusCode === 201
+    ) {
+      return response;
+    }
+    // Preserve validation/business errors returned by the SP.
+    throw new HttpException(
+      response,
+      response.statusCode,
+    );
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    throw new InternalServerErrorException({
+      success: false,
+      statusCode: 500,
+      message:
+        'An unexpected error occurred while uploading the KYC document.',
+      data: null,
+    });
+  }
+}
 }

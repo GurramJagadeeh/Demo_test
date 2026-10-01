@@ -51,47 +51,70 @@ export class KycRepository {
    * - Version management
    */
   async uploadKycDocument(
-    userId: string,
-    docId: string,
-    docUrl: string,
-  ): Promise<string | null> {
-    try {
-      const pool = await connectDB();
-      const result = await pool
-        .request()
-        .input(
-          'user_id',
-          sql.VarChar(sql.MAX),
-          userId,
-        )
-        .input(
-          'doc_id',
-          sql.VarChar(10),
-          docId,
-        )
-        .input(
-          'doc_url',
-          sql.VarChar(sql.MAX),
-          docUrl,
-        )
-        .execute('dbo.USP_User_KYC_Upload');
-      if (
-        !result.recordset ||
-        result.recordset.length === 0
-      ) {
-        return null;
-      }
-      const firstRow = result.recordset[0];
-      const firstColumn = Object.keys(firstRow)[0];
-      return firstColumn
-        ? firstRow[firstColumn] ?? null
-        : null;
-    } catch (error) {
-      console.error(
-        'Error executing dbo.USP_User_KYC_Upload:',
-        error,
-      );
-      throw error;
+  userId: string,
+  docId: string,
+  docUrl: string,
+  ipAddress: string,
+  userAgent: string,
+): Promise<string | null> {
+  try {
+    const pool = await connectDB();
+    console.log('KYC Upload Parameters:', {
+      userId,
+      docId,
+      docUrl,
+      ipAddress,
+      userAgent,
+    });
+    const result = await pool
+      .request()
+      .input(
+        'user_id',
+        sql.VarChar(sql.MAX),
+        userId,
+      )
+      .input(
+        'doc_id',
+        sql.VarChar(10),
+        docId,
+      )
+      .input(
+        'doc_url',
+        sql.VarChar(sql.MAX),
+        docUrl,
+      )
+      .input(
+        'ipadd',
+        sql.VarChar(sql.MAX),
+        ipAddress,
+      )
+      .input(
+        'useragent',
+        sql.VarChar(sql.MAX),
+        userAgent,
+      )
+      .execute('dbo.USP_User_KYC_Upload');
+    console.log(
+      'KYC Upload SP Result:',
+      JSON.stringify(result.recordset, null, 2),
+    );
+    if (
+      !result.recordset ||
+      result.recordset.length === 0
+    ) {
+      return null;
     }
+    const firstRow = result.recordset[0];
+    const firstColumn = Object.keys(firstRow)[0];
+    return firstColumn
+      ? firstRow[firstColumn] ?? null
+      : null;
+  } catch (error) {
+    console.error(
+      'Error executing dbo.USP_User_KYC_Upload:',
+      error,
+    );
+    throw error;
   }
+}
 }
