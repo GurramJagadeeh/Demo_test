@@ -6,30 +6,46 @@ import { UserRegistrationDto } from '../dto/register.dto';
 export class RegisterRepository {
 
   // USER REGISTRATION GET
-  async userRegistrationget() {
-    try {
-      const pool = await connectDB();
-      const result = await pool
-        .request()
-        .execute('USP_User_Registration_Get');
-      if (
-        !result.recordset ||
-        result.recordset.length === 0 ||
-        !result.recordset[0].Result
-      ) {
-        throw new Error(
-          'No result returned from USP_User_Registration_Get',
-        );
-      }
-      return JSON.parse(result.recordset[0].Result);
-    } catch (error) {
-      console.error(
-        'Error executing USP_User_Registration_Get:',
-        error,
-      );
-      throw error;
+/**
+ * Fetches the master data required for user registration.
+ *
+ * The stored procedure does not require any input parameters.
+ * It returns the complete response as JSON, including countries,
+ * societies, roles, and the corresponding status information.
+ */
+async userRegistrationget(): Promise<string | null> {
+  try {
+    const pool = await connectDB();
+
+    // Execute the registration master-data stored procedure.
+    const result = await pool
+      .request()
+      .execute('dbo.USP_User_Registration_Get');
+
+    // No result returned from the stored procedure.
+    if (
+      !result.recordset ||
+      result.recordset.length === 0
+    ) {
+      return null;
     }
+
+    // Get the JSON response from the first column.
+    const firstRow = result.recordset[0];
+    const firstColumn = Object.keys(firstRow)[0];
+
+    return firstColumn
+      ? firstRow[firstColumn] ?? null
+      : null;
+  } catch (error) {
+    console.error(
+      'Error executing dbo.USP_User_Registration_Get:',
+      error,
+    );
+
+    throw error;
   }
+}
   // USER REGISTRATION PRE-CHECK
   async registrationCheck(
     umail: string,
@@ -136,31 +152,15 @@ async userRegistration(
         sql.BigInt,
         dto.floorid,
       )
-      .input(
-        'unitnumber',
-        sql.BigInt,
-        dto.unitnumber,
-      )
-      .input(
-        'user_role',
-        sql.BigInt,
-        dto.user_role,
-      )
-      .input(
-        'unit_branch',
-        sql.VarChar(100),
-        dto.unit_branch,
-      )
-      .input(
-        'ipaddress',
-        sql.VarChar(sql.MAX),
-        ipAddress,
-      )
-      .input(
-        'user_agent',
-        sql.VarChar(sql.MAX),
-        userAgent,
-      )
+     .input('unitnumber', sql.BigInt, dto.unitnumber)
+     .input('user_role', sql.BigInt, dto.user_role)
+
+      // Registration sub-role details
+     .input('sub_role', sql.BigInt, dto.sub_role)
+     .input('sub_role_cat',sql.BigInt,dto.sub_role_cat ?? null,)
+     .input('unit_branch', sql.VarChar(100), dto.unit_branch)
+     .input('ipaddress',sql.VarChar(sql.MAX),ipAddress,)
+      .input('user_agent',sql.VarChar(sql.MAX),userAgent,)
       .execute(
         'dbo.USP_User_Registration',
       );
