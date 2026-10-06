@@ -63,6 +63,11 @@ export class UserRegistrationDto {
   @IsOptional()
   @IsString()
   unit_branch?: string;
+  @IsNumber()
+  sub_role: number;
+  @IsOptional()
+  @IsNumber()
+  sub_role_cat?: number;
 }
 
 export class VerifyRegistrationOtpDto {

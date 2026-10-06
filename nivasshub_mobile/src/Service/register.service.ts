@@ -17,59 +17,92 @@ export class RegisterService {
     private readonly mailService: MailService,
   ) {}
   //-------------USER REGISTRATION GET----------------------
-  async userregistrationget() {
+  //-------------USER REGISTRATION GET----------------------
+
+/**
+ * Fetches the master data required for user registration.
+ *
+ * The stored procedure returns a JSON response containing
+ * countries, societies, roles, and status information.
+ */
+async userregistrationget() {
   try {
-    // Call the repository to execute the country and state stored procedure
+    // Execute the registration master-data stored procedure.
     const result =
       await this.registerRepository.userRegistrationget();
-    // Handle empty or undefined response from the repository
+
+    // Handle empty or undefined response from the repository.
     if (!result) {
       throw new InternalServerErrorException({
-        StatusCode: 500,
-        StatusMessage:
-          'An error occurred while fetching the country list.',
-        TotalCountries: 0,
-        ActiveCountries: [],
+        success: false,
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message:
+          'An unexpected error occurred while fetching registration data.',
+        data: null,
       });
     }
-    // Handle 404 response returned by the stored procedure
-    if (result.StatusCode === 404) {
-      throw new HttpException(
-        result,
-        result.StatusCode,
-      );
+
+    let response;
+
+    try {
+      // Parse the JSON returned by the stored procedure.
+      response = JSON.parse(result);
+    } catch {
+      // Handle invalid JSON returned by the database.
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message:
+          'Invalid response received from registration data procedure.',
+        data: null,
+      });
     }
-    // Handle 500 response returned by the stored procedure
-    if (result.StatusCode === 500) {
-      throw new HttpException(
-        result,
-        result.StatusCode,
-      );
+
+    // Validate the StatusCode returned by the stored procedure.
+    if (
+      !response ||
+      typeof response.StatusCode !== 'number'
+    ) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message:
+          'Invalid registration data response.',
+        data: null,
+      });
     }
-    // Return the response when the stored procedure is successful
-    if (result.StatusCode === 200) {
-      return result;
+
+    // Return successful response for 2xx status codes.
+    if (
+      response.StatusCode >= 200 &&
+      response.StatusCode < 300
+    ) {
+      return response;
     }
-    // Handle any unexpected status code
-    throw new InternalServerErrorException({
-      StatusCode: 500,
-      StatusMessage:
-        'An error occurred while fetching the country list',
-      TotalCountries: 0,
-      ActiveCountries: [],
-    });
+
+    // Preserve the status code and complete response
+    // returned by the stored procedure.
+    throw new HttpException(
+      response,
+      response.StatusCode,
+    );
   } catch (error) {
-    // Preserve the original HTTP exception and status code
+    // Preserve the HTTP exception generated above.
     if (error instanceof HttpException) {
       throw error;
     }
-    // Convert any unexpected error into a standard 500 response
+
+    // Convert unexpected errors into HTTP 500.
     throw new InternalServerErrorException({
-      StatusCode: 500,
-      StatusMessage:
-        'An error occurred while fetching the country list',
-      TotalCountries: 0,
-      ActiveCountries: [],
+      success: false,
+      statusCode: 500,
+      errorCode: 'INTERNAL_ERROR',
+      message:
+        'An unexpected error occurred while fetching registration data.',
+      data: null,
     });
   }
 }
