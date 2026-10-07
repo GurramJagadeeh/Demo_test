@@ -9,37 +9,39 @@ export class KycRepository {
    * inside the stored procedure.
    */
   async getKycDocuments(
-    userToken: string,
-  ): Promise<string | null> {
-    try {
-      const pool = await connectDB();
-      const result = await pool
-        .request()
-        .input(
-          'user_token',
-          sql.VarChar(sql.MAX),
-          userToken,
-        )
-        .execute('dbo.USP_User_Registration_KYC_GET');
-      if (
-        !result.recordset ||
-        result.recordset.length === 0
-      ) {
-        return null;
-      }
-      const firstRow = result.recordset[0];
-      const firstColumn = Object.keys(firstRow)[0];
-      return firstColumn
-        ? firstRow[firstColumn] ?? null
-        : null;
-    } catch (error) {
-      console.error(
-        'Error executing dbo.USP_User_Registration_KYC_GET:',
-        error,
+  userToken: string,
+): Promise<string | null> {
+  try {
+    const pool = await connectDB();
+    const result = await pool
+      .request()
+      .input(
+        'user_token',
+        sql.VarChar(sql.MAX),
+        userToken,
+      )
+      .execute(
+        'dbo.USP_User_Registration_KYC_GET',
       );
-      throw error;
+    if (
+      !result.recordset ||
+      result.recordset.length === 0
+    ) {
+      return null;
     }
+    const firstRow = result.recordset[0];
+    const firstColumn = Object.keys(firstRow)[0];
+    return firstColumn
+      ? firstRow[firstColumn] ?? null
+      : null;
+  } catch (error) {
+    console.error(
+      'Error executing dbo.USP_User_Registration_KYC_GET:',
+      error,
+    );
+    throw error;
   }
+}
   /**
    * Upload or re-upload a KYC document.
    * The stored procedure handles:
@@ -53,7 +55,7 @@ export class KycRepository {
   async uploadKycDocument(
   userId: string,
   docId: string,
-  docUrl: string,
+  documentBuffer: Buffer,
   ipAddress: string,
   userAgent: string,
 ): Promise<string | null> {
@@ -62,7 +64,7 @@ export class KycRepository {
     console.log('KYC Upload Parameters:', {
       userId,
       docId,
-      docUrl,
+      documentSize: documentBuffer.length,
       ipAddress,
       userAgent,
     });
@@ -79,10 +81,10 @@ export class KycRepository {
         docId,
       )
       .input(
-        'doc_url',
-        sql.VarChar(sql.MAX),
-        docUrl,
-      )
+  'doc_url',
+  sql.VarBinary(sql.MAX),
+  documentBuffer,
+)
       .input(
         'ipadd',
         sql.VarChar(sql.MAX),
@@ -112,6 +114,63 @@ export class KycRepository {
   } catch (error) {
     console.error(
       'Error executing dbo.USP_User_KYC_Upload:',
+      error,
+    );
+    throw error;
+  }
+}
+/**
+ * Fetches the KYC documents already uploaded by the user.
+ * Passes the user token, client IP address, and user-agent
+ * to the stored procedure for validation and document retrieval.
+ */
+async getUserKycDocuments(
+  userToken: string,
+  ipAddress: string,
+  userAgent: string,
+): Promise<string | null> {
+  try {
+    const pool = await connectDB();
+    const result = await pool
+      .request()
+      // User's current registration/session token.
+      .input(
+        'user_token',
+        sql.VarChar(sql.MAX),
+        userToken,
+      )
+      // Client IP address for audit/session tracking.
+      .input(
+        'ipaddress',
+        sql.VarChar(sql.MAX),
+        ipAddress,
+      )
+      // Client user-agent for audit/session tracking.
+      .input(
+        'useragent',
+        sql.VarChar(sql.MAX),
+        userAgent,
+      )
+      // Fetches the user's uploaded KYC documents.
+      .execute(
+        'dbo.USP_Get_User_KYC_Documents_Json',
+      );
+    // The stored procedure returns its JSON response
+    // as the first column of the first record.
+    if (
+      !result.recordset ||
+      result.recordset.length === 0
+    ) {
+      return null;
+    }
+    const firstRow = result.recordset[0];
+    const firstColumn = Object.keys(firstRow)[0];
+    return firstColumn
+      ? firstRow[firstColumn] ?? null
+      : null;
+  } catch (error) {
+    console.error(
+      'Error executing dbo.USP_Get_User_KYC_Documents_Json:',
       error,
     );
     throw error;
