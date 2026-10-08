@@ -17,16 +17,11 @@ export class KycDocumentsDto {
 }
 /**
  * Request DTO for uploading or re-uploading
- * a user's KYC document.
- * The stored procedure handles:
- * - User ID decryption
- * - User validation
- * - Active user validation
- * - Society validation
- * - Document validation
- * - Pending/rejected validation
- * - Insert/update decision
- * - Version management
+ * a user's KYC document using multipart/form-data.
+ * The actual file is received separately through
+ * the controller's @UploadedFile() parameter.
+ * The backend generates the document URL/path
+ * and passes it to the KYC stored procedure.
  */
 export class KycUploadDto {
   @IsString()
@@ -35,7 +30,4 @@ export class KycUploadDto {
   @IsString()
   @IsNotEmpty()
   doc_id!: string;
-  @IsString()
-  @IsNotEmpty()
-  doc_url!: string;
 }
