@@ -351,7 +351,6 @@ async reUploadKycDocument(
      */
     const originalName =
       file.filename || 'kyc-document';
-
     const safeFileName =
       `${Date.now()}_${originalName}`;
     /*

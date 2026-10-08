@@ -200,7 +200,6 @@ async reUploadKycDocument(
 ): Promise<string | null> {
   try {
     const pool = await connectDB();
-
     console.log('KYC Re-Upload Parameters:', {
       userId,
       docId,
@@ -208,7 +207,6 @@ async reUploadKycDocument(
       ipAddress,
       userAgent,
     });
-
     const result = await pool
       .request()
       .input(
@@ -239,7 +237,6 @@ async reUploadKycDocument(
       .execute(
         'dbo.USP_User_KYC_Document_Re_Upload',
       );
-
     console.log(
       'KYC Re-Upload SP Result:',
       JSON.stringify(
@@ -248,29 +245,23 @@ async reUploadKycDocument(
         2,
       ),
     );
-
     if (
       !result.recordset ||
       result.recordset.length === 0
     ) {
       return null;
     }
-
     const firstRow = result.recordset[0];
     const firstColumn =
       Object.keys(firstRow)[0];
-
     return firstColumn
       ? firstRow[firstColumn] ?? null
       : null;
-
   } catch (error) {
-
     console.error(
       'Error executing dbo.USP_User_KYC_Document_Re_Upload:',
       error,
     );
-
     throw error;
   }
 }
