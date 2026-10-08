@@ -21,7 +21,7 @@
     "strict": true,
     "strictPropertyInitialization": false,
 
-    "types": ["node","multer"],
+    "types": ["node"],
 
     "ignoreDeprecations": "6.0"
   },

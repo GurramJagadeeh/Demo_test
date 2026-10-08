@@ -88,4 +88,50 @@ async uploadKycDocument(
     req,
   );
 }
+@Post('re-upload')
+@HttpCode(HttpStatus.OK)
+async reUploadKycDocument(
+  @Req() req: FastifyRequest,
+) {
+  const file = await (req as any).file();
+
+  if (!file) {
+    return this.kycService.reUploadKycDocument(
+      {
+        user_id: '',
+        doc_id: '',
+      },
+      undefined,
+      req,
+    );
+  }
+
+  const userIdField = file.fields.user_id;
+  const docIdField = file.fields.doc_id;
+
+  const userId =
+    userIdField &&
+    'value' in userIdField &&
+    typeof userIdField.value === 'string'
+      ? userIdField.value
+      : '';
+
+  const docId =
+    docIdField &&
+    'value' in docIdField &&
+    typeof docIdField.value === 'string'
+      ? docIdField.value
+      : '';
+
+  const dto: KycUploadDto = {
+    user_id: userId,
+    doc_id: docId,
+  };
+
+  return this.kycService.reUploadKycDocument(
+    dto,
+    file,
+    req,
+  );
+}
 }
