@@ -18,7 +18,7 @@ import {
 @Controller('auth')
 export class LoginController {
   constructor(private readonly loginService: LoginService) {}
-  /** POST /auth/login derives network metadata on the server. */
+  /** POST /auth/login derives network metadwata on the server. */
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() credentials: LoginDto, @Req() request: FastifyRequest) {
