@@ -3,7 +3,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Query,
+  Query,Headers
 } from '@nestjs/common';
 import { SocietyDetailsDto } from '../dto/society.dto';
 import { SocietyService } from '../Service/society.service';
@@ -35,4 +35,17 @@ export class SocietyController {
     // Pass the request data to the service layer.
     return this.societyService.getSocietyDetails(dto);
   }
+  // GET Countries → States → Societies hierarchy
+@Get('countries-states-societies')
+async getCountriesStatesSocieties(
+  // Read the Authorization header from the request
+  @Headers('authorization') authorization: string,
+) {
+  // Extract the token by removing the Bearer prefix if present
+  const sessionToken = authorization?.startsWith('Bearer ')
+    ? authorization.substring(7)
+    : authorization;
+  // Pass the token to the service and return the response
+  return this.societyService.getCountriesStatesSocieties(sessionToken);
+}
 }

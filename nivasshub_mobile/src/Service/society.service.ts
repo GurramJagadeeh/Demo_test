@@ -234,4 +234,81 @@ export class SocietyService {
       });
     }
   }
+/// GET CountriesStatesSocieties
+async getCountriesStatesSocieties(sessionToken: string) {
+  try {
+    // Check whether the session token is provided.
+    if (!sessionToken) {
+      throw new HttpException(
+        {
+          status: 'error',
+          statusCode: 400,
+          message: 'Session token is required.',
+          data: null,
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+    // Call the repository to execute the stored procedure
+    // and pass the session token to SQL Server.
+    const result =
+      await this.societyRepository
+        .getCountriesStatesSocieties(sessionToken);
+    // Handle the case where the stored procedure returns no response.
+    if (!result) {
+      throw new InternalServerErrorException(
+        'No response received from stored procedure.',
+      );
+    }
+    let response: any;
+    // Parse the JSON string returned by the stored procedure
+    // into a JavaScript object.
+    try {
+      response = JSON.parse(result);
+    } catch (error) {
+      // Log the parsing error if the SP response is invalid JSON.
+      console.error(
+        'Failed to parse SP response:',
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Invalid response received from stored procedure.',
+      );
+    }
+    // Read the HTTP status code returned by the stored procedure.
+    // Use 500 if the status code is missing or invalid.
+    const statusCode =
+      Number(response?.statusCode) || 500;
+    // If the SP returns an error status, send its response
+    // to the client with the corresponding HTTP status code.
+    if (statusCode !== 200) {
+      throw new HttpException(
+        response,
+        statusCode,
+      );
+    }
+    // Return the successful Country → State → Society hierarchy.
+    return response;
+  } catch (error) {
+    // Preserve existing HTTP exceptions and their status codes.
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    // Log unexpected repository, database, or application errors.
+    console.error(
+      'Get Countries States Societies Service Error:',
+      error,
+    );
+    // Return a standardized HTTP 500 response for unexpected errors.
+    throw new InternalServerErrorException({
+      status: 'error',
+      statusCode: 500,
+      message:
+        'An unexpected error occurred. Please try again later.',
+      data: null,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
 }
