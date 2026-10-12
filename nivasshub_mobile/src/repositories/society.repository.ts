@@ -185,4 +185,26 @@ async getAddSocietyMasterData(
       throw error;
     }
   }
+  // Get Countries, States, and Societies
+async getCountriesStatesSocieties(sessionToken: string): Promise<string | null> {
+  try {
+    // Establish a connection to the database
+    const pool = await connectDB();
+    // Pass the session token and execute the stored procedure
+    const result = await pool
+      .request()
+      .input('session_Token', sql.VarChar(500), sessionToken)
+      .execute('dbo.USP_Add_Society_Get_Countries_States_Societies');
+    // Return null if the stored procedure returns no records
+    if (!result.recordset || result.recordset.length === 0) {
+      return null;
+    }
+    // Return the JSON response from the stored procedure
+    return result.recordset[0].response ?? null;
+  } catch (error) {
+    // Log the error if stored procedure execution fails
+    console.error('Error executing USP_Add_Society_Get_Countries_States_Societies:', error);
+    throw error;
+  }
+}
 }

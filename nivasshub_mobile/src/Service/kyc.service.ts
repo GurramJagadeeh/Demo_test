@@ -289,4 +289,177 @@ async getUserKycDocuments(
     });
   }
 }
+/**
+ * Re-upload an existing KYC document.
+ *
+ * Request type:
+ * multipart/form-data
+ *
+ * Fields:
+ * user_id - Text
+ * doc_id  - Text
+ * file    - File
+ */
+async reUploadKycDocument(
+  dto: KycUploadDto,
+  file: MultipartFile | undefined,
+  req: FastifyRequest,
+) {
+  try {
+    // File is mandatory
+    if (!file) {
+      throw new BadRequestException({
+        success: false,
+        statusCode: 400,
+        message: 'KYC document file is required.',
+        data: null,
+      });
+    }
+    // Validate user ID
+    if (!dto.user_id) {
+      throw new BadRequestException({
+        success: false,
+        statusCode: 400,
+        message: 'user_id is required.',
+        data: null,
+      });
+    }
+    // Validate document ID
+    if (!dto.doc_id) {
+      throw new BadRequestException({
+        success: false,
+        statusCode: 400,
+        message: 'doc_id is required.',
+        data: null,
+      });
+    }
+    // Get IP address
+    const ipAddress = req.ip || '';
+    // Get User-Agent
+    const userAgent =
+      req.headers['user-agent']?.toString() || '';
+    /*
+     * Save the uploaded file.
+     *
+     * We use the existing file.toBuffer()
+     * so the request remains multipart/form-data.
+     */
+    const documentBuffer =
+      await file.toBuffer();
+    /*
+     * Generate a file name.
+     */
+    const originalName =
+      file.filename || 'kyc-document';
+    const safeFileName =
+      `${Date.now()}_${originalName}`;
+    /*
+     * For the separate re-upload SP,
+     * doc_url is VARCHAR(MAX).
+     *
+     * Therefore we generate a URL and
+     * send that URL to the SP.
+     *
+     * Make sure your application serves
+     * the uploads folder.
+     */
+    const docUrl =
+      `http://localhost:3000/uploads/kyc/${safeFileName}`;
+
+    console.log(
+      'KYC Re-Upload Details:',
+      {
+        userId: dto.user_id,
+        docId: dto.doc_id,
+        fileName: originalName,
+        fileSize: documentBuffer.length,
+        docUrl,
+        ipAddress,
+        userAgent,
+      },
+    );
+    /*
+     * Execute the re-upload stored procedure.
+     */
+    const result =
+  await this.kycRepository.reUploadKycDocument(
+    dto.user_id,
+    dto.doc_id,
+    documentBuffer,
+    ipAddress,
+    userAgent,
+  );
+    // No SP response
+    if (!result) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        message:
+          'An unexpected error occurred while re-uploading the KYC document.',
+        data: null,
+      });
+    }
+    let response;
+
+    // Parse SP JSON response
+    try {
+      response = JSON.parse(result);
+    } catch {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        message:
+          'Invalid response received from KYC re-upload procedure.',
+        data: null,
+      });
+    }
+    // Validate response
+    if (
+      !response ||
+      typeof response.statusCode !== 'number'
+    ) {
+      throw new InternalServerErrorException({
+        success: false,
+        statusCode: 500,
+        message:
+          'Invalid KYC re-upload response.',
+        data: null,
+      });
+    }
+    /*
+     * Successful re-upload
+     */
+    if (
+      response.statusCode === 200
+    ) {
+      return response;
+    }
+    /*
+     * Preserve SP business errors
+     *
+     * Example:
+     * 400 validation
+     * 401 invalid token
+     * 404 document not found
+     * 409 pending
+     * 500 database error
+     */
+    throw new HttpException(
+      response,
+      response.statusCode,
+    );
+  } catch (error) {
+    // Preserve NestJS HTTP exceptions
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    throw new InternalServerErrorException({
+      success: false,
+      statusCode: 500,
+      message:
+        'An unexpected error occurred while re-uploading the KYC document.',
+      data: null,
+    });
+  }
+}
 }

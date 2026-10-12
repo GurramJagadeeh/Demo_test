@@ -176,4 +176,93 @@ async getUserKycDocuments(
     throw error;
   }
 }
+/**
+ * Re-upload an already submitted KYC document.
+ *
+ * The request is received as multipart/form-data.
+ * The service saves the uploaded file and generates
+ * the document URL. The stored procedure handles:
+ * - Session token validation
+ * - User validation
+ * - Society validation
+ * - Document validation
+ * - Existing document validation
+ * - Pending-state validation
+ * - Version update
+ * - Session-token generation
+ */
+async reUploadKycDocument(
+  userId: string,
+  docId: string,
+  docmentBuffer:Buffer,
+  ipAddress: string,
+  userAgent: string,
+): Promise<string | null> {
+  try {
+    const pool = await connectDB();
+    console.log('KYC Re-Upload Parameters:', {
+      userId,
+      docId,
+      docmentBuffer,
+      ipAddress,
+      userAgent,
+    });
+    const result = await pool
+      .request()
+      .input(
+        'user_id',
+        sql.VarChar(sql.MAX),
+        userId,
+      )
+      .input(
+        'doc_id',
+        sql.VarChar(10),
+        docId,
+      )
+       .input(
+  'doc_url',
+  sql.VarBinary(sql.MAX),
+  docmentBuffer,
+)
+      .input(
+        'ipaddress',
+        sql.VarChar(sql.MAX),
+        ipAddress,
+      )
+      .input(
+        'useragent',
+        sql.VarChar(sql.MAX),
+        userAgent,
+      )
+      .execute(
+        'dbo.USP_User_KYC_Document_Re_Upload',
+      );
+    console.log(
+      'KYC Re-Upload SP Result:',
+      JSON.stringify(
+        result.recordset,
+        null,
+        2,
+      ),
+    );
+    if (
+      !result.recordset ||
+      result.recordset.length === 0
+    ) {
+      return null;
+    }
+    const firstRow = result.recordset[0];
+    const firstColumn =
+      Object.keys(firstRow)[0];
+    return firstColumn
+      ? firstRow[firstColumn] ?? null
+      : null;
+  } catch (error) {
+    console.error(
+      'Error executing dbo.USP_User_KYC_Document_Re_Upload:',
+      error,
+    );
+    throw error;
+  }
+}
 }
