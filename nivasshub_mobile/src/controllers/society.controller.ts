@@ -43,10 +43,8 @@ export class SocietyController {
   }
   /**
  * Get all master data required for the Add Society screen.
- *
  * Example:
  * GET /society/add-master-data?user_token=YOUR_SESSION_TOKEN
- *
  * The IP address and device information are obtained
  * directly from the incoming request.
  */
@@ -58,11 +56,9 @@ async getAddSocietyMasterData(
 ) {
   // Get the client IP address from the Fastify request.
   const ipAddress = req.ip || '';
-
   // Use the User-Agent header as device/client information.
   const deviceInfo =
     req.headers['user-agent']?.toString() || '';
-
   // Pass all required values to the service layer.
   return this.societyService.getAddSocietyMasterData(
     dto.user_token,
@@ -70,7 +66,6 @@ async getAddSocietyMasterData(
     deviceInfo,
   );
 }
-
   /**
    * Adds a registered user to a society unit.
    * POST /society/add-user
@@ -83,12 +78,10 @@ async getAddSocietyMasterData(
     // Get request metadata on the server.
     const ipAddress = req.ip || '';
     const deviceInfo = req.headers['user-agent'] || '';
-
     return this.societyService.addUserToSociety(
       dto,
       ipAddress,
       deviceInfo,
     );
   }
-
 }

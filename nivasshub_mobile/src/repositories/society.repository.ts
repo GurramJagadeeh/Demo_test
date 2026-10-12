@@ -89,13 +89,10 @@ export class SocietyRepository {
   }
   /**
  * Executes the Add Society master data stored procedure.
- *
  * Stored Procedure:
  * dbo.USP_Add_Society_Get
- *
  * The procedure validates the user's session and returns
  * the complete Add Society master data response as JSON.
- *
  * @param userToken - User session/refresh token.
  * @param ipAddress - Client IP address.
  * @param deviceInfo - Client device information.
@@ -109,7 +106,6 @@ async getAddSocietyMasterData(
   try {
     // Establish a connection with SQL Server.
     const pool = await connectDB();
-
     // Execute the Add Society master data stored procedure.
     const result = await pool
       .request()
@@ -129,7 +125,6 @@ async getAddSocietyMasterData(
         deviceInfo,
       )
       .execute('dbo.USP_Add_Society_Get');
-
     /**
      * The stored procedure returns one row containing
      * the complete JSON response in the Result column.
@@ -140,7 +135,6 @@ async getAddSocietyMasterData(
     ) {
       return null;
     }
-
     return result.recordset[0].Result ?? null;
   } catch (error) {
     // Log database errors on the server.
@@ -148,12 +142,10 @@ async getAddSocietyMasterData(
       'Error executing dbo.USP_Add_Society_Get:',
       error,
     );
-
     // Pass the error to the service layer.
     throw error;
   }
 }
-
   /**
    * Adds a registered user to a society unit.
    * Executes the stored procedure and returns its JSON response.
@@ -165,7 +157,6 @@ async getAddSocietyMasterData(
   ): Promise<string | null> {
     try {
       const pool = await connectDB();
-
       const result = await pool
         .request()
         .input('user_token', sql.VarChar(sql.MAX), dto.user_token)
@@ -184,11 +175,9 @@ async getAddSocietyMasterData(
         .input('ipadd', sql.VarChar(200), ipAddress)
         .input('dinfo', sql.VarChar(200), deviceInfo)
         .execute('dbo.USP_User_Add_Society');
-
       // Return the JSON response column from the procedure.
       const row = result.recordset?.[0];
       if (!row) return null;
-
       const response = row.ResponseJson ?? Object.values(row)[0];
       return typeof response === 'string' ? response : null;
     } catch (error) {
@@ -196,5 +185,4 @@ async getAddSocietyMasterData(
       throw error;
     }
   }
-
 }
