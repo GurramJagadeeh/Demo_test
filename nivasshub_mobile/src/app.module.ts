@@ -6,6 +6,7 @@ import { SocietyModule } from './module/society.module';
 import { OtpModule } from './module/otp.module';
 import { MailModule } from './mail/mail.module';
 import { KycModule } from './module/kyc.module';
+import { VehicleModule } from './module/vehicle.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -22,6 +23,7 @@ import { KycModule } from './module/kyc.module';
     OtpModule,
     MailModule,
     KycModule,
+    VehicleModule,
   ],
 })
 export class AppModule {}
