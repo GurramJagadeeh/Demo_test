@@ -37,4 +37,47 @@ async getVehicleBrands(
     throw error;
   }
 }
+  /**
+   * Registers a vehicle using the authenticated user's token.
+   * The stored procedure derives the resident ID from the token.
+   */
+  async addVehicle(
+    userToken: string,
+    vehicleType: string,
+    vehicleRegistrationNumber: string,
+    vehicleBrandId: number,
+    vehicleModel: string,
+    vehicleColour: string,
+    ipAddress: string,
+    parkingZoneId: number,
+    deviceInfo: string,
+  ): Promise<{ HttpStatusCode: number; JsonResponse: string } | null> {
+    const pool = await connectDB();
+    const result = await pool
+      .request()
+      // Match the updated stored procedure's parameters exactly.
+      .input('user_token', sql.VarChar(sql.MAX), userToken)
+      .input('vehicletype', sql.VarChar(100), vehicleType)
+      .input(
+        'vehicleregistrationnumber',
+        sql.VarChar(100),
+        vehicleRegistrationNumber,
+      )
+      .input('vehiclebrandid', sql.BigInt, vehicleBrandId)
+      .input('vehiclemodel', sql.VarChar(100), vehicleModel)
+      .input('vehicle_colour', sql.VarChar(100), vehicleColour)
+      .input('ipadd', sql.VarChar(500), ipAddress)
+      .input('parkingzoneid', sql.BigInt, parkingZoneId)
+      .input('dinfo', sql.VarChar(500), deviceInfo)
+      .execute('dbo.USP_User_Add_Vehicle');
+    // The procedure returns the HTTP status and JSON body in one row.
+    const row = result.recordset?.[0];
+    if (!row) {
+      return null;
+    }
+    return {
+      HttpStatusCode: Number(row.HttpStatusCode),
+      JsonResponse: String(row.JsonResponse ?? ''),
+    };
+  }
 }
