@@ -1,10 +1,11 @@
 import {
   Injectable,
   HttpException,
-  InternalServerErrorException,
+  InternalServerErrorException,BadRequestException
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AddFamilyRepository } from '../repositories/family.repository';
+import { UserAddFamilyDto } from '../dto/family.dto';
 @Injectable()
 export class AddFamilyService {
   constructor(
@@ -90,6 +91,136 @@ export class AddFamilyService {
           requestId: randomUUID(),
           timestamp: new Date().toISOString(),
         },
+      });
+    }
+  }
+   // Add a family member using the stored procedure
+  async addFamilyMember(
+    userToken: string,
+    ipAddress: string,
+    deviceInfo: string,
+    data: UserAddFamilyDto,
+  ): Promise<{ statusCode: number; response: any }> {
+    const meta = {
+      request_id: randomUUID(),
+      timestamp: new Date().toISOString(),
+    };
+    try {
+      // Validate required request details
+      if (!userToken) {
+        throw new BadRequestException({
+          success: false,
+          status: 401,
+          message: 'User token is required.',
+          data: null,
+          error: {
+            code: 'TOKEN_REQUIRED',
+            field: 'user_token',
+            detail: 'Authorization token is missing.',
+          },
+          meta,
+        });
+      }
+      if (!ipAddress) {
+        throw new BadRequestException({
+          success: false,
+          status: 400,
+          message: 'IP address is required.',
+          data: null,
+          error: {
+            code: 'IP_REQUIRED',
+            field: 'ipadd',
+            detail: 'Client IP address is missing.',
+          },
+          meta,
+        });
+      }
+      if (!deviceInfo) {
+        throw new BadRequestException({
+          success: false,
+          status: 400,
+          message: 'Device information is required.',
+          data: null,
+          error: {
+            code: 'DEVICE_INFO_REQUIRED',
+            field: 'dinfo',
+            detail: 'Device information is missing.',
+          },
+          meta,
+        });
+      }
+      // Execute the repository and stored procedure
+      const result = await this.addFamilyRepository.addFamilyMember(
+        userToken,
+        ipAddress,
+        deviceInfo,
+        data,
+      );
+      // Ensure the stored procedure returned the expected columns
+      if (!result?.response_json) {
+        throw new InternalServerErrorException({
+          success: false,
+          status: 500,
+          message: 'Invalid response from stored procedure.',
+          data: null,
+          error: {
+            code: 'INVALID_SP_RESPONSE',
+            field: null,
+            detail: 'Expected response_json was not returned.',
+          },
+          meta,
+        });
+      }
+      // Parse the JSON response returned by SQL Server
+      const response =
+        typeof result.response_json === 'string'
+          ? JSON.parse(result.response_json)
+          : result.response_json;
+      const statusCode = Number(result.http_status_code);
+      // Validate the HTTP status returned by the stored procedure
+      if (
+        !Number.isInteger(statusCode) ||
+        statusCode < 100 ||
+        statusCode > 599
+      ) {
+        throw new InternalServerErrorException({
+          success: false,
+          status: 500,
+          message: 'Invalid HTTP status from stored procedure.',
+          data: null,
+          error: {
+            code: 'INVALID_HTTP_STATUS',
+            field: null,
+            detail: 'The stored procedure returned an invalid HTTP status.',
+          },
+          meta,
+        });
+      }
+      // Add metadata if it was not included in the SP response
+      response.meta ??= meta;
+      // Return the actual status and body to the controller
+      return {
+        statusCode,
+        response,
+      };
+    } catch (error) {
+      // Preserve known NestJS HTTP exceptions
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      // Log unexpected errors for debugging
+      console.error('Add family member service error:', error);
+      throw new InternalServerErrorException({
+        success: false,
+        status: 500,
+        message: 'Failed to add family member.',
+        data: null,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          field: null,
+          detail: 'An unexpected server error occurred.',
+        },
+        meta,
       });
     }
   }
