@@ -1,10 +1,11 @@
-import {
+import {Body,
   Controller,
   Get,
-  Req,
+  Req,Post,Res,HttpException,UsePipes,ValidationPipe
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request,Response } from 'express';
 import { AddFamilyService } from '../Service/family.service';
+import { UserAddFamilyDto } from '../dto/family.dto';
 @Controller('get-family')
 export class AddFamilyController {
   constructor(
@@ -27,4 +28,28 @@ export class AddFamilyController {
       deviceInfo,
     );
   }
+@Post('add-family')
+@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+async addFamilyMember(
+  @Body() data: UserAddFamilyDto,
+  @Req() req: Request,
+) {
+  // Get the bearer token
+  const authHeader = req.headers.authorization;
+  const userToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : '';
+  // Get client IP and device information
+  const ipAddress = req.ip ?? '';
+  const deviceInfo = req.headers['user-agent'] ?? '';
+  // Call service
+  const result = await this.addFamilyService.addFamilyMember(
+    userToken,
+    ipAddress,
+    deviceInfo,
+    data,
+  );
+  // Return the response body
+  return result.response;
+}
 }
