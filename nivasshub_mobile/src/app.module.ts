@@ -7,6 +7,7 @@ import { OtpModule } from './module/otp.module';
 import { MailModule } from './mail/mail.module';
 import { KycModule } from './module/kyc.module';
 import { VehicleModule } from './module/vehicle.module';
+import { AddFamilyModule } from './module/family.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -24,6 +25,7 @@ import { VehicleModule } from './module/vehicle.module';
     MailModule,
     KycModule,
     VehicleModule,
+    AddFamilyModule
   ],
 })
 export class AppModule {}
