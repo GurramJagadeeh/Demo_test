@@ -8,6 +8,7 @@ import { MailModule } from './mail/mail.module';
 import { KycModule } from './module/kyc.module';
 import { VehicleModule } from './module/vehicle.module';
 import { AddFamilyModule } from './module/family.module';
+import { PetModule } from './module/pet.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -25,7 +26,8 @@ import { AddFamilyModule } from './module/family.module';
     MailModule,
     KycModule,
     VehicleModule,
-    AddFamilyModule
+    AddFamilyModule,
+    PetModule,
   ],
 })
 export class AppModule {}
