@@ -83,46 +83,65 @@ export class LoginService {
    * the expected login response structure.
    */
   private isLoginResponse(
-    response: unknown,
-  ): response is LoginResponse {
-    if (!response || typeof response !== 'object') {
-      return false;
-    }
-    const value = response as Partial<LoginResponse>;
+  response: unknown,
+): response is LoginResponse {
+  if (!response || typeof response !== 'object') {
+    return false;
+  }
+
+  const value = response as Record<string, unknown>;
+
+  if (
+    typeof value.success !== 'boolean' ||
+    typeof value.statusCode !== 'number' ||
+    typeof value.message !== 'string'
+  ) {
+    return false;
+  }
+
+  const data = value.data;
+
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    Array.isArray(data)
+  ) {
+    return false;
+  }
+
+  const refreshToken = (data as Record<string, unknown>)
+    .refreshToken;
+
+  if (value.statusCode === 200) {
     return (
-      typeof value.success === 'boolean' &&
-      typeof value.statusCode === 'number' &&
-      typeof value.message === 'string' &&
-      (
-        typeof value.Login_Tokens === 'string' ||
-        value.Login_Tokens === null
-      )
+      value.success === true &&
+      typeof refreshToken === 'string'
     );
   }
-  /**
-   * Checks whether the status code is a valid
-   * HTTP status code.
-   */
-  private isHttpStatus(statusCode: number): boolean {
-    return (
-      Number.isInteger(statusCode) &&
-      statusCode >= 100 &&
-      statusCode <= 599
-    );
-  }
-  /**
-   * Standard response used when an unexpected
-   * application/database error occurs.
-   */
-  private internalError(): LoginResponse {
-    return {
-      success: false,
-      statusCode: 500,
-      message:
-        'An unexpected error occurred while processing the login',
-      Login_Tokens: null,
-    };
-  }
+
+  return (
+    value.success === false &&
+    (refreshToken === null || refreshToken === undefined)
+  );
+}
+private internalError(): LoginResponse {
+  return {
+    success: false,
+    statusCode: 500,
+    message:
+      'An unexpected error occurred while processing the login',
+    data: {
+      refreshToken: null,
+    },
+  };
+}
+private isHttpStatus(statusCode: number): boolean {
+  return (
+    Number.isInteger(statusCode) &&
+    statusCode >= 100 &&
+    statusCode <= 599
+  );
+}
   /**
    * Verifies forgot-password OTP.
    */

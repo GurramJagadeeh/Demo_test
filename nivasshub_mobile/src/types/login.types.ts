@@ -4,7 +4,9 @@ export interface LoginResponse {
   success: boolean;
   statusCode: number;
   message: string;
-  Login_Tokens: string | null;
+  data: {
+    refreshToken: string | null;
+  };
 }
 /** Internal procedure parameters, including server-derived metadata. */
 export type LoginProcedureRequest = LoginDto & {
