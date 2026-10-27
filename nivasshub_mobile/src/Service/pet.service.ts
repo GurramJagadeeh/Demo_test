@@ -4,6 +4,8 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PetRepository } from '../repositories/pet.repository';
+import { AddPetDto } from '../dto/pet.dto';
+import { randomUUID } from 'crypto';
 @Injectable()
 export class PetService {
   constructor(
@@ -135,6 +137,89 @@ export class PetService {
           timestamp: new Date().toISOString(),
         },
       });
+    }
+  }
+  /// Calls the repository, parses the SP response,
+  // and returns the response body and HTTP status.
+  async addPet(
+    userToken: string,
+    ipAddress: string,
+    deviceInfo: string,
+    data: AddPetDto,
+  ): Promise<{
+    statusCode: number;
+    response: Record<string, any>;
+  }> {
+    // Create a request ID for logs and error tracking.
+    const requestId = randomUUID();
+    try {
+      // Pass the token, request metadata, and form data to SQL.
+      const raw = await this.petRepository.addPet(
+        userToken,
+        ipAddress,
+        deviceInfo,
+        data,
+      );
+      // The SP may return a JSON string or an already parsed object.
+      const parsed =
+        typeof raw === 'string' ? JSON.parse(raw) : raw;
+      // Ensure the response is a JSON object.
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        Array.isArray(parsed)
+      ) {
+        throw new Error(
+          'Stored procedure returned an invalid JSON response.',
+        );
+      }
+      // Treat the SP response as the authoritative response body.
+      const response = parsed as Record<string, any>;
+      // Read the status returned by the stored procedure.
+      const statusCode = Number(
+        response.status ?? response.status_code,
+      );
+      // Reject responses that do not contain a valid HTTP status.
+      if (
+        !Number.isInteger(statusCode) ||
+        statusCode < 100 ||
+        statusCode > 599
+      ) {
+        throw new Error(
+          'Stored procedure returned an invalid HTTP status.',
+        );
+      }
+      // Add metadata only when the SP did not return it.
+      response.meta ??= {};
+      response.meta.requestId ??= requestId;
+      response.meta.timestamp ??= new Date().toISOString();
+      // Return the original SP response and its HTTP status.
+      return {
+        statusCode,
+        response,
+      };
+    } catch (error) {
+      // Log the real exception on the server for debugging.
+      // Avoid exposing database details to the frontend.
+      console.error('Add Pet service error:', error);
+      // Return a standardized generic internal error.
+      return {
+        statusCode: 500,
+        response: {
+          success: false,
+          status: 500,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message:
+              'An unexpected error occurred. Please try again later.',
+            field: null,
+          },
+          meta: {
+            requestId,
+            timestamp: new Date().toISOString(),
+          },
+        },
+      };
     }
   }
 }
