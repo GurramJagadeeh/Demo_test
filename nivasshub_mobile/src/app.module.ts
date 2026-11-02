@@ -9,6 +9,7 @@ import { KycModule } from './module/kyc.module';
 import { VehicleModule } from './module/vehicle.module';
 import { AddFamilyModule } from './module/family.module';
 import { PetModule } from './module/pet.module';
+import { UserProfileModule } from './module/userprofile.module';
 /**
  * Root application module.
  * Imports and registers the feature modules used
@@ -27,7 +28,7 @@ import { PetModule } from './module/pet.module';
     KycModule,
     VehicleModule,
     AddFamilyModule,
-    PetModule,
+    PetModule,UserProfileModule
   ],
 })
 export class AppModule {}
