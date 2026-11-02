@@ -53,4 +53,32 @@ export class UserProfileController {
     // 6. Return stored procedure response with its HTTP status
     return reply.code(result.statusCode).send(result);
   }
+  // Get User Own Properties
+@Get('own-properties')
+async getUserOwnProperties(
+  @Headers('authorization') authorization: string,
+  @Query('user_token') queryToken: string,
+  @Ip() ipAddress: string,
+  @Req() req: FastifyRequest,
+  @Res() reply: FastifyReply,
+) {
+  // Get token from Bearer header or query parameter
+  const token = authorization?.startsWith('Bearer ')
+    ? authorization.substring(7).trim()
+    : queryToken?.trim() || '';
+  // Normalize client IP address
+  const ipadd = (ipAddress || '')
+    .replace('::ffff:', '')
+    .replace('::1', '127.0.0.1');
+  // Get device information
+  const dinfo = (req.headers['user-agent'] || '').substring(0, 250);
+  // Call service to execute stored procedure
+  const result = await this.userProfileService.getUserOwnProperties({
+    user_token: token,
+    ipadd,
+    dinfo,
+  });
+  // Return complete JSON response from stored procedure
+  return reply.code(result.statusCode).send(result);
+}
 }

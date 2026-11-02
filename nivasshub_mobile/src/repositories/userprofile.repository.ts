@@ -26,6 +26,19 @@ export interface UserProfileResponse {
     message: string;
   }>;
 }
+export interface UserOwnPropertiesParams {
+  user_token: string;
+  ipadd: string;
+  dinfo: string;
+}
+export interface UserOwnPropertiesResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  requestId: string;
+  data: any;
+  errors: any[];
+}
 @Injectable()
 export class UserProfileRepository {
   private readonly logger = new Logger(UserProfileRepository.name);
@@ -131,4 +144,32 @@ export class UserProfileRepository {
       });
     }
   }
+  // Get User Own Properties
+async getUserOwnProperties(
+  params: UserOwnPropertiesParams,
+): Promise<UserOwnPropertiesResponse> {
+  try {
+    // Connect to database
+    const pool = await connectDB();
+    // Pass input parameters
+    const request = pool.request();
+    request.input('user_token', sql.VarChar(4000), params.user_token);
+    request.input('ipadd', sql.VarChar(250), params.ipadd);
+    request.input('dinfo', sql.VarChar(250), params.dinfo);
+    // Get JSON response from stored procedure
+    request.output('JsonOutput', sql.NVarChar(sql.MAX));
+    const result = await request.execute(
+      'dbo.USP_User_Own_Get_Properities',
+    );
+    // Read and parse JSON response
+    const response =
+      result.output?.JsonOutput ?? result.recordset?.[0]?.JsonOutput;
+    return typeof response === 'string'
+      ? JSON.parse(response)
+      : response;
+  } catch (error) {
+    console.error('Get User Own Properties Error:', error);
+    throw error;
+  }
+}
 }
